@@ -25,7 +25,7 @@ From Question [How to organize large R programs?][1] on Stackoverflow.com:
        
        attach(util)
   
->This is all in a file util.R. When you source it, you get the environment 'util' so you can call util$bgrep() and such; but furthermore, the attach() call makes it so just bgrep() and such work directly. If you didn't put all those functions in their own environment, they'd pollute the interpreter's top-level namespace (the one that ls() shows).
+>This is all in a file util.R. When you source() it, you get the environment 'util' so you can call util$bgrep() and such; but furthermore, the attach() call makes it so just bgrep() and such work directly. If you didn't put all those functions in their own environment, they'd pollute the interpreter's top-level namespace (the one that ls() shows).
 >
 >Trying to simulate Python's system, where every file is a module. That would be better to have, but this seems OK.
 
