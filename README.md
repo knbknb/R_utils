@@ -1,6 +1,8 @@
 R_utils
 =======
 
+See also my "snippets" repository.
+
 Forked from Brendan O'Connor's github repo [dlanalysis][2], Feb 2013.
 
 **util.R contains utilities for R that might be useful.**
