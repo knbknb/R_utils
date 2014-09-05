@@ -3,17 +3,6 @@
 # Brendan O'Connor, brenocon.com/code - see bottom of file
 
 
-########################################
-
-## Transform a list of vector of the same length to a data.frame.
-
-#from : https://github.com/bobthecat/codebox/blob/master/list2DF.r
-listOfVec2DF <- function(list){
-  l <- as.vector(unlist(lapply(list, length)))
-  if(length(unique(l))>1) stop("Elements in vectors are not same length. Cannot transform to data.frame")
-  df <- as.data.frame(matrix(as.vector(unlist(list)), ncol=l[1]))
-  return(df)
-}
 
 
 
@@ -165,6 +154,18 @@ util$ngrep <- function(pat,x, ...)
 
 ########################################
 ##  Other data manipulation routines
+########################################
+
+## Transform a list of vector of the same length to a data.frame.
+
+#from : https://github.com/bobthecat/codebox/blob/master/list2DF.r
+util$listOfVec2DF <- function(list){
+        l <- as.vector(unlist(lapply(list, length)))
+        if(length(unique(l))>1) stop("Elements in vectors are not same length. Cannot transform to data.frame")
+        df <- as.data.frame(matrix(as.vector(unlist(list)), ncol=l[1]))
+        return(df)
+}
+
 
 util$merge.list <- function(x,y,only.new.y=FALSE,append=FALSE,...) {
   # http://tolstoy.newcastle.edu.au/R/devel/04/11/1469.html
