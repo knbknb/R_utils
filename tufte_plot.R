@@ -55,7 +55,8 @@ table.graph <- function(df, line.col=c("grey", "black"), label.cex=1, title.cex=
 
 
 
-#
+# does the same plot as function table.graph() above,
+# but also needs 'plotrix' package
 # slopegraph.r
 #
 # Created by David Ruau on 2011-07-18.
