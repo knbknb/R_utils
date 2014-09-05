@@ -1,3 +1,6 @@
+## 
+## the plotrix::bumpchart() function is superior to these functions
+## 
 #
 # table.graph.r
 #
