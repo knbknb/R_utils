@@ -1,7 +1,26 @@
 ## 
 ## the plotrix::bumpchart() function is superior to these functions
 ## 
-#
+library(plotrix)
+# percentage of those over 25 years having completed high school
+# in 10 cities in the USA in 1990 and 2000
+educattn<-matrix(c(90.4,90.3,75.7,78.9,66,71.8,70.5,70.4,68.4,67.9,
+                   67.2,76.1,68.1,74.7,68.5,72.4,64.3,71.2,73.1,77.8),ncol=2,byrow=TRUE)
+rownames(educattn)<-c("Anchorage AK","Boston MA","Chicago IL",
+                      "Houston TX","Los Angeles CA","Louisville KY","New Orleans LA",
+                      "New York NY","Philadelphia PA","Washington DC")
+colnames(educattn)<-c(1990,2000)
+bumpchart(educattn,main="Rank for high school completion by over 25s",
+          arrows=TRUE,length=0.2)
+# now show the raw percentages and add central ticks
+bumpchart(educattn,rank=FALSE,
+          main="Percentage high school completion by over 25s",
+          lty=1:10,lwd=1,col=rainbow(10))
+# margins have been reset, so use
+par(xpd=TRUE)
+boxed.labels(1.5,seq(65,90,by=5),seq(65,90,by=5))
+par(xpd=FALSE)
+
 # table.graph.r
 #
 # Created by David Ruau on 2011-06-23.
@@ -56,7 +75,7 @@ table.graph <- function(df, line.col=c("grey", "black"), label.cex=1, title.cex=
   par(old.par)
 }
 
-
+table.graph(cars, label.cex=0.7, mar=c(5, 5, 1, 5))
 
 # does the same plot as function table.graph() above,
 # but also needs 'plotrix' package
@@ -113,7 +132,8 @@ slopegraph <- function(data, label.cex=0.8, axis.cex=0.9, digits = 2, rounding.m
   par(old.par)
 }
 
-
+slopegraph(data = t(WorldPhones[,1:3]), mymain = "YEARS", mar=c(2, 5, 5, 5), label.cex=0.8, axis.cex=0.9)
+# 
 .rd.method <- function(rounding.method, width, digits){
   rounding.character <- switch(match(rounding.method, c("round", "signif")), "f", "g")
   fmt = paste("%.", digits, rounding.character, sep = "")
