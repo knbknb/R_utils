@@ -10,6 +10,8 @@
 ## Tell R the terminal width.  Needs to be re-run every time you resize the
 ## terminal, so source() this file 
 
+
+
 if ( (numcol <-Sys.getenv("COLUMNS")) != "") {
   numcol = as.integer(numcol)
   options(width= numcol - 1)
@@ -25,6 +27,17 @@ if ( (numcol <-Sys.getenv("COLUMNS")) != "") {
     }
   }
   rm(output)
+} else {
+  #http://stackoverflow.com/a/1172884/202553 -modified
+  #options(width=as.integer(system("stty -a | head -n 1 | awk '{print $7}' | sed 's/;//'", intern=T)))
+  # options("width"=200)
+  wideScreen <- function(){
+    suppressWarnings({
+    howWide=strsplit(system('stty size', intern=TRUE, ignore.stderr = TRUE), ' ')
+    options(width=ifelse(as.logical(length(howWide)), as.integer(howWide[[1]][2]), 150))
+    })
+  }
+  wideScreen()
 }
 rm(numcol)
 
@@ -59,6 +72,7 @@ util$read.tsv <- function(..., header=F, sep='\t', quote='', comment='', na.stri
   args$na.strings = na.strings
   do.call(read.delim, args)
 }
+attr(util$read.tsv, "help") <- "A read.table() wrapper with default settings for headerless, pure TSV"
 
 util$write.tsv <- function(..., header=NA, col.names=F, row.names=F, sep='\t', na='', quote=F) {
   # 'header' to 'col.names' naming consistency with read.table()
@@ -74,8 +88,8 @@ util$as.c <- as.character
 
 util$unwhich <- function(indices, len=length(indices)) {
   # reverse of which(): from indices to boolean mask.
-  ret = rep(F,len)
-  ret[indices] = T
+  ret <- rep(FALSE,len)
+  ret[indices] <- TRUE
   ret
 }
 
@@ -391,11 +405,12 @@ util$excel <- function(d) {
   write.csv(d, con, row.names=FALSE)
   close(con)
   # system(paste("open -a 'Microsoft Excel' ",f, sep=''))
-  system(paste("open -a '/Applications/Microsoft Office 2008/Microsoft Excel.app' ",f, sep=''))
+  #system(paste("open -a '/Applications/Microsoft Office 2008/Microsoft Excel.app' ",f, sep=''))
+  system(paste("open -a 'libreoffice' ",f, sep=''))
 }
 
-util$mate <- function(...) {
-  system(paste("mate", ...))
+util$subl <- function(...) {
+  system(paste("subl", ...))
 }
 
 util$vim <- function(...) {
@@ -428,6 +443,7 @@ util$dopdf <- function(filename,..., cmd) {
   if (exists('OPEN') && OPEN)
     system(sprintf("open %s", filename))
 }
+attr(util$dopdf, "help") <- "Command: dopdf('tmp.pdf',width=5,height=5,cmd=plot(x,y))"
 
 util$dopng <- function(filename,..., cmd) {
   png(filename, ...)
@@ -466,9 +482,10 @@ util$linelight <- function(x,y, lty='dashed', col='lightgray', ...) {
   segments(left,y, x,y, lty=lty, col=col, ...)
   segments(x,bot,  x,y, lty=lty, col=col, ...)
 }
+attr(util$linelight, "help") <- "Highlight point(s) in a plot with dashed lines running to the x,y-axes."
 
 util$hintonplot <- function(mat, max_value=max(abs(mat)), mid_value=0, ...) {
-  # Plots a matrix as colored, size-varying boxes
+  # Plots a matrix/dataframe/table as colored, size-varying boxes
   # I dunno who started calling this a "Hinton plot", but anyways
 
   # Example:
@@ -506,6 +523,7 @@ util$hintonplot <- function(mat, max_value=max(abs(mat)), mid_value=0, ...) {
   axis(2, 1:nrow(mat), labels=row.names(mat))
   title(xlab=names(dimnames(mat))[2], ylab=names(dimnames(mat))[1], ...)
 }
+attr(util$hintonplot, "help") <- " Plots a matrix/dataframe/table as colored, size-varying boxes"
 
 util$binary_eval <- function(pred,labels, cutoff='naive', repar=TRUE, ...) {
   # Various binary classification evaluation plots and metrics
@@ -605,50 +623,28 @@ util$binary_eval <- function(pred,labels, cutoff='naive', repar=TRUE, ...) {
   invisible(rocr_pred)
 }
 
-
-########################################
-# These are kinda obscure, should delete?
-
-util$fair_gt <- function(x,y) {
-  # Breaks ties arbitrarily.  # of TRUE's should be halfway between > and >=.
-  ret = rep(NA, length(x))
-  ret[x > y] = TRUE
-  ret[x < y] = FALSE
-  # which filler order?  should randomly chooise either c(T,F) vs c(F,T) as the
-  # seed (or a random permutation of 50/50 distribution on the whole length),
-  # but not clear how to stably but arbitrarily choose one...  hash the bitmap
-  # of the concatenation of x and y perhaps.  don't know how to do in highlevel R.
-  filler_length = length(which(x==y))
-  filler = rep(c(TRUE,FALSE), ceiling(filler_length/2) )[1:filler_length]
-  ret[which(x == y)] = filler
-  ret
+util$save.xlsx <- function (file, ...)
+  {
+      require(xlsx, quietly = TRUE)
+      objects <- list(...)
+      fargs <- as.list(match.call(expand.dots = TRUE))
+      objnames <- as.character(fargs)[-c(1, 2)]
+      nobjects <- length(objects)
+      for (i in 1:nobjects) {
+          if (i == 1)
+              write.xlsx(objects[[i]], file, sheetName = objnames[i])
+          else write.xlsx(objects[[i]], file, sheetName = objnames[i],
+              append = TRUE)
+      }
+      print(paste("Workbook", file, "has", nobjects, "worksheets."))
 }
-
-util$fair_lt <- function(x,y)  ! fair_gt(x,y)
-
-util$rand_gt <- function(x,y) {
-  # Breaks ties randomly.
-  ret = rep(NA, length(x))
-  ret[x > y] = TRUE
-  ret[x < y] = FALSE
-  filler_length = length(which(x==y))
-  filler = as.logical(rbern(filler_length))
-  ret[which(x == y)] = filler
-  ret
-}
-
-util$rand_lt <- function(x,y)  ! rand_gt(x,y)
-
-
-
-
-
 ########################################
 
 
 
 ########################################
-## Has to be last in file
+## Has to be last in file. 
+# Do no longer need to fully qualify package name.
 
 while("util" %in% search())
   detach("util")
