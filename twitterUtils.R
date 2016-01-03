@@ -158,6 +158,57 @@ twitterUtil$append2SQLite <- function(dfr, db.name, table.name){
 }
 attr(twitterUtil$append2SQLite, "help") <- "append a a data frame to a table in an SQLite database"
 
+twitterUtil$makeTweetsTableUnique <- function( db.name, table.name = "xx"){
+        #username.table <- paste0(query.name,"_userinfo")
+        conn <- dbConnect(SQLite(), dbname = db.name)
+
+        
+        table.name.unique <- paste0(table.name,  "_unique_", "_", as.numeric(as.POSIXct(Sys.time(), format="%Y-%m-%d"))*100000)
+        RSQLite::dbBegin(conn)
+        try({        
+                sql <- paste0("drop table ", table.name.unique)  
+                dbSendQuery(conn, sql)
+                
+                }, silent = TRUE)
+        sql <- paste0('CREATE TABLE ', table.name.unique , 
+'( "text" TEXT,
+	"favorited" INTEGER,
+	"favoriteCount" REAL,
+	"replyToSN" INTEGER,
+	"created" REAL,
+	"truncated" INTEGER,
+	"replyToSID" INTEGER,
+	"id" TEXT,
+	"replyToUID" INTEGER,
+	"statusSource" TEXT,
+	"screenName" TEXT,
+	"retweetCount" REAL,
+	"isRetweet" INTEGER,
+	"retweeted" INTEGER,
+	"longitude" TEXT,
+	"latitude" TEXT 
+)')
+        dbSendQuery(conn, sql)
+
+        sql = paste0("insert into ", table.name.unique, " select distinct * from ", table.name)  
+        dbSendQuery(conn, sql)
+        
+        sql = paste0("delete from ", table.name)  
+        dbSendQuery(conn, sql)
+        
+        sql = paste0("insert into ", table.name, " select  * from ", table.name.unique)  
+        dbSendQuery(conn, sql)
+        
+        sql = paste0("drop table ", table.name.unique)  
+        #sql = paste0("delete from ", table.name.unique)  
+        
+        dbSendQuery(conn, sql)
+        dbCommit(conn)
+        
+        dbDisconnect(conn)
+}
+attr(twitterUtil$makeTweetsTableUnique, "help") <- "only keep unique records in the tweets-table"
+
 ########################################
 ## Has to be last in file. 
 # After executing this, funciton is part of global namespace, 
