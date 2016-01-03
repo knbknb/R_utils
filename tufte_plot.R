@@ -9,7 +9,7 @@ educattn<-matrix(c(90.4,90.3,75.7,78.9,66,71.8,70.5,70.4,68.4,67.9,
 rownames(educattn)<-c("Anchorage AK","Boston MA","Chicago IL",
                       "Houston TX","Los Angeles CA","Louisville KY","New Orleans LA",
                       "New York NY","Philadelphia PA","Washington DC")
-colnames(educattn)<-c(1990,2000)
+colnames(educattn)<-c("1990\n","2000\n")
 bumpchart(educattn,main="Rank for high school completion by over 25s",
           arrows=TRUE,length=0.2)
 # now show the raw percentages and add central ticks

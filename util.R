@@ -79,19 +79,30 @@ util$write.tsv <- function(..., header=NA, col.names=F, row.names=F, sep='\t', n
   if (is.finite(header)) col.names = header
   write.table(..., col.names=col.names, row.names=row.names, sep=sep, na=na, quote=quote)
 }
+attr(util$write.tsv, "help") <- "export a dataset in the format consistent with the defaults of read.table()"
 
 
 ########################################
 ##  Misc small routines
 
+## A helper function that tests whether an object is either NULL _or_ 
+## a list of NULLs
+util$is.NullOb <- function(x) is.null(x) | all(sapply(x, is.null))
+
+## Recursively step down into list, removing all such objects 
+util$rmNullObs <- function(x) {
+        x <- Filter(Negate(is.NullOb), x)
+        lapply(x, function(x) if (is.list(x)) rmNullObs(x) else x)
+}
+
 util$as.c <- as.character
 
 util$unwhich <- function(indices, len=length(indices)) {
-  # reverse of which(): from indices to boolean mask.
   ret <- rep(FALSE,len)
   ret[indices] <- TRUE
   ret
 }
+attr(util$unwhich, "help") <- "# reverse of which(): from indices to boolean mask."
 
 util$nna <- function(...) !is.na(...)   # i type this a lot, i think its worth 3 characters + shift key
 
@@ -142,8 +153,7 @@ util$prio_check = function(...) {
   FALSE
 }
 
-util$grid_points <- function(min,max) {
-  # 1,2,5,10,20,50 ... kinda-exponential scaling, nice for grid search
+util$grid_points <- function(min=1,max) {
   x = min
   ret = NULL
   while(x <= max) {
@@ -152,18 +162,18 @@ util$grid_points <- function(min,max) {
   }
   ret[ret <= max]
 }
+attr(util$grid_points, "help") <- "grid_points(1, 40) returns 1,2,5,10,20,50 ... kinda-exponential scaling, nice for grid search"
 
 # grep() returns indices of matches.  Variants:
 
 util$bgrep <- function(pat,x, ...) {
-  # "boolean" grep: return a logical vector ready for vector ops
-  # like & |  and others
   unwhich(grep(pat,x,...), length(x))
 }
+attr(util$bgrep, "help") <- "'boolean' grep: return a logical vector ready for vector ops, like & |  and others"
 
 util$ngrep <- function(pat,x, ...)
-  # "normal" grep: return values, not indices
   x[grep(pat,x,...)]
+attr(util$bgrep, "help") <- "'normal' grep: return values, not indices"
 
 
 ########################################
@@ -181,7 +191,7 @@ util$listOfVec2DF <- function(list){
 }
 
 
-util$merge.list <- function(x,y,only.new.y=FALSE,append=FALSE,...) {
+util$merge.lists <- function(x,y,only.new.y=FALSE,append=FALSE,...) {
   # http://tolstoy.newcastle.edu.au/R/devel/04/11/1469.html
   out=x
 
@@ -203,6 +213,7 @@ util$merge.list <- function(x,y,only.new.y=FALSE,append=FALSE,...) {
    }
    return(out)
 }
+attr(util$merge.lists, "help") <- "several ways to 'merge' two different lists. Removes duplicates (append, only.new.y"
 
 util$tapply2 <- function(x, ...) {
   # like tapply but preserves factors
@@ -213,6 +224,7 @@ util$tapply2 <- function(x, ...) {
   }
   r
 }
+attr(util$tapply2, "help") <- "like tapply(), but preserves factors."
 
 util$inject <- function(collection, start, fn) {
   # like lisp reduce.  (named after ruby)
@@ -274,6 +286,7 @@ util$ppy <- function(x, column.major=FALSE, ...) {
   cat(as.yaml(x, column.major=column.major), ...)
   cat("\n", ...)
 }
+attr(util$ppy, "help") <- "pretty-print as YAML. Intended for rows with big textual cells."
 
 util$table_html = function(...) {
   # Intended for inside dosink()
@@ -360,7 +373,7 @@ util$list_objects = function (pos = 1, pattern) {
 }
 
 util$lsos = function() {
-  d = list_objects()
+  d = list_objects() # util$list_objects()
   d$name = row.names(d)
   d = subset(d, name != 'util')
   row.names(d)=d$name
@@ -386,6 +399,8 @@ util$timeit <- function(expr, name=NULL) {
 util$dotprogress <- function(callback, interval=10) {
   # intended to wrap the anonymous callback for sapply() or somesuch.
   # ALTERNATIVE: plyr *ply(.progress='text')
+  # ALternative: utils::txtProgressBar,
+  # see https://ryouready.wordpress.com/2009/03/16/r-monitor-function-progress-with-a-progress-bar/
   count = 0
   return(function(...) {
     if ((count <<- count+1) %% interval == 0)
@@ -421,6 +436,14 @@ util$ll <- function(...) {
   system(paste("ls","-l",...))
 }
 
+util$firefox <- function(...) {
+        system(paste("firefox",...))
+}
+
+util$chrome <- function(...) {
+        system(paste("google-chrome",...))
+}
+
 util$newwin <- function(x) {
   # Takes object printout into new file... dosink(OPEN=T) kinda subsumes this
   f = paste("/tmp/tmp.", round(runif(1)*100),".txt",  sep='')
@@ -447,6 +470,7 @@ attr(util$dopdf, "help") <- "Command: dopdf('tmp.pdf',width=5,height=5,cmd=plot(
 
 util$dopng <- function(filename,..., cmd) {
   png(filename, ...)
+  par(mar = c(0,0,0,10))
   eval(cmd)
   dev.off()
   if ((exists('OPEN') && OPEN))
@@ -458,7 +482,7 @@ util$dosink <- function(filename,cmd, open=NULL) {
   sink(filename)
   eval(cmd)
   sink(NULL)
-  if (prio_check(open, exists('OPEN') && OPEN))
+  if (?prio_check(open, exists('OPEN') && OPEN))
     system(sprintf("open %s", filename))
 }
 
@@ -529,6 +553,7 @@ util$binary_eval <- function(pred,labels, cutoff='naive', repar=TRUE, ...) {
   # Various binary classification evaluation plots and metrics
   library(ROCR)
   # plot(performance(prediction(pred,y),'acc'))
+        #as.numeric(performance(ROCRpred, "auc")@y.values)
   rocr_pred = prediction(pred,labels)
   acc = performance(rocr_pred,'acc')
   f1 = performance(rocr_pred,'f')
@@ -638,13 +663,108 @@ util$save.xlsx <- function (file, ...)
       }
       print(paste("Workbook", file, "has", nobjects, "worksheets."))
 }
+
+
+util$ggtheme <- function (){
+        theme(panel.background =        element_rect(fill=        "#FFFFFF"),
+              panel.grid.major.x = element_blank(),
+              panel.grid.major.y = element_line(colour= "grey",size=0.1),
+              panel.grid.minor   = element_line(colour="grey",size=0.1))
+}
+
+util$sysenv_search <- function(pat="."){
+        grep(pat, names(Sys.getenv()),perl=TRUE, value=TRUE)
+}
+attr(util$sysenv_search, "help") <- "Perform a simple grep-search on environment variables, return keys only"
+
+
+
+util$sysenv_get <- function(pat="."){
+        varnames <- grep(pat, names(Sys.getenv()),perl=TRUE, value=TRUE)
+        Sys.getenv(varnames)
+}
+attr(util$sysenv_get, "help") <- "Perform a simple grep-search on environment variables, return keys _and_ values"
+
+util$tryCatch.W.E <- function(expr){
+        W <- NULL
+        w.handler <- function(w){ # warning handler
+         	W <<- w
+         	invokeRestart("muffleWarning")
+        }
+        list(value = withCallingHandlers(
+                tryCatch(expr, error = function(e) e),
+                warning = w.handler),
+    	 warning = W)
+}
+attr(util$tryCatch.W.E, "help") <- "from demo(error.catching): 1) catch all errors and warnings (and continue), 2) store the error or warning messages."
+
+
+
+util$unshorten_url <- function(uri, timeoutsecs=5){
+    if(require(RCurl)){
+        uri <- as.character(uri)
+        if(RCurl::url.exists(uri)){
+                # from listCurlOptions()
+                #do not stop if requests time out
+                resolved_list <- tryCatch.W.E (eval({
+                        opts <- list(
+                                timeout = timeoutsecs, 
+                                maxredirs = 5, 
+                                followlocation = TRUE,  # resolve redirects
+                                ssl.verifyhost = FALSE, # suppress certain SSL errors
+                                ssl.verifypeer = FALSE, 
+                                nobody = TRUE, # perform HEAD request - not guaranteed to return something
+                                verbose = FALSE
+                        )
+                        curlhandle = getCurlHandle(.opts = opts)
+                        getURL(uri, curl = curlhandle)
+                        info <- getCurlInfo(curlhandle)
+                        rm(curlhandle)  # release the curlhandle!
+                        as.character(info$effective.url)
+                }))
+                return(resolved_list)
+#                 resolved <- ! is.null(resolved_list[["warning"]])  & 
+#                                 ! is.null(resolved_list[["value"]][["message"]])
+#                 if(resolved){
+#                         resolved_list[["value"]]
+#                 } else {
+#                         #mesg <- resolved_list["warning"]["message"]
+#                         warning(paste("cannot resolve url:", uri, "\n"))
+#                         uri
+#                 }
+        } else {
+                # just return the url as-is
+                warning(paste0("url invalid, or 404 error: ", uri, "\n"))
+                uri
+        }
+   } else {
+        # just return the url as-is
+        printf(paste0("cannot load package RCurl, returning as-is:", uri, "\n"))
+        uri
+   }
+}
+attr(util$unshorten_url, "help") <- "Resolve an anonymous URL given by an URL shortener"
+
+util$extractURL<-function(x, s=".") {
+        if(grepl(pattern = s,x = x, perl=TRUE, ignore.case = TRUE)){
+                m <- gregexpr('https?\\S+',x, perl = TRUE, ignore.case = TRUE)
+                return(regmatches(x, m))   
+        }
+        x
+}
+
+util$removeURL <- function(x) gsub('https?://\\S+',"",x, perl = TRUE)
+
+
+
 ########################################
 
 
 
 ########################################
 ## Has to be last in file. 
-# Do no longer need to fully qualify package name.
+# After executing this, function is part of global namespace, 
+# so we do no longer need to fully qualify package name.
 
 while("util" %in% search())
   detach("util")
