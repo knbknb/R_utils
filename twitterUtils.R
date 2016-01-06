@@ -25,6 +25,14 @@ twitterUtil$getFollowers <- function(user, nMax=1000, ...)
     list(users=followers, location=followersLocation)
   }
 
+twitterUtil$getFollowersList <- function(user, nMax=1000, ...)
+{
+        followers=patchLookupUsers(user$getFollowerIDs(n=nMax))
+        list(followers=followers)
+        #} 
+        
+}
+
 # get latitude and longitude from a location name
 twitterUtil$findLatLon <- function(loc)
   {
