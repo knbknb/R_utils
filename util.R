@@ -756,7 +756,7 @@ util$extractURL<-function(x, s=".") {
 util$removeURL <- function(x) gsub('https?://\\S+',"",x, perl = TRUE)
 
 
-
+util$'%nin%' <- Negate('%in%')
 ########################################
 
 
