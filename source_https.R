@@ -12,6 +12,8 @@
 #
 #####################################################
 
+is.NullOb <- function(x) is.null(x) | all(sapply(x, is.null))
+
 source_https <- function(url, ...) {
   # load package
   require(RCurl)
