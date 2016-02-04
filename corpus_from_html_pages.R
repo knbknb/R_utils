@@ -1,5 +1,9 @@
 library(tm)
 library(XML)
+
+# also in util.R
+is.NullOb <- function(x) is.null(x) | all(sapply(x, is.null))
+
 #http://stackoverflow.com/questions/20971094/tm-combine-list-of-corpora
 link <- c(
         "http://www.r-statistics.com/tag/hadley-wickham/",                                                      
