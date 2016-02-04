@@ -175,7 +175,12 @@ util$ngrep <- function(pat,x, ...)
   x[grep(pat,x,...)]
 attr(util$bgrep, "help") <- "'normal' grep: return values, not indices"
 
-
+util$age <- function(dob, age.day = today(), units = "years", floor = TRUE) {
+        suppressMessages(library(lubridate))
+        calc.age = interval(dob, age.day) / duration(num = 1, units = units)
+        if (floor) return(as.integer(floor(calc.age)))
+        return(calc.age)
+}
 ########################################
 ##  Other data manipulation routines
 ########################################
@@ -755,6 +760,17 @@ util$extractURL<-function(x, s=".") {
 
 util$removeURL <- function(x) gsub('https?://\\S+',"",x, perl = TRUE)
 
+util$removeStrangeMarkup <- function(x) {
+        # remove ed><a0><bc><ed><be><89 and similar
+        x <- gsub('(?:<\\w\\w>)+',"",x, perl = TRUE)
+        x <- gsub('(?:\\w\\w><\\w\\w) ?',"",x, perl = TRUE)
+        x
+}
+
+util$removeFirstChars <- function(x, pat="^#|^@|\\s#|\\s@") {
+        # remove #hashmarks and @mentions
+        gsub(pat,"",x, perl = TRUE)
+}
 
 util$'%nin%' <- Negate('%in%')
 ########################################
