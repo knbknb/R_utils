@@ -8,7 +8,7 @@
 
 ########################################
 ## Tell R the terminal width.  Needs to be re-run every time you resize the
-## terminal, so source() this file 
+## terminal, so source() this file
 
 
 
@@ -17,7 +17,7 @@ if ( (numcol <-Sys.getenv("COLUMNS")) != "") {
   options(width= numcol - 1)
 
 } else if (Sys.info()['sysname'] == 'Darwin') {
-  # I think this is a mac-only stty output format. 
+  # I think this is a mac-only stty output format.
   # TODO need to prevent this from executing when under GUI
   output = tryCatch(system("stty -a", intern=T), error=I)
   if (length(output) > 0) {
@@ -85,11 +85,11 @@ attr(util$write.tsv, "help") <- "export a dataset in the format consistent with 
 ########################################
 ##  Misc small routines
 
-## A helper function that tests whether an object is either NULL _or_ 
+## A helper function that tests whether an object is either NULL _or_
 ## a list of NULLs
 util$is.NullOb <- function(x) is.null(x) | all(sapply(x, is.null))
 
-## Recursively step down into list, removing all such objects 
+## Recursively step down into list, removing all such objects
 util$rmNullObs <- function(x) {
         x <- Filter(Negate(is.NullOb), x)
         lapply(x, function(x) if (is.list(x)) rmNullObs(x) else x)
@@ -350,15 +350,15 @@ util$list_objects = function (pos = 1, pattern) {
         s
       }
     }
-      
+
     pad = function(s) sprintf(" %s", s)
 
     out <- data.frame(
       Type = obj_type,
       Size = obj_prettysize,
-      Dim = ifelse(is_vector | is_flat, obj_length, 
+      Dim = ifelse(is_vector | is_flat, obj_length,
         sprintf("(%s, %s)", obj_dim[,1], obj_dim[,2])),
-      Value = napply(names, function(x) 
+      Value = napply(names, function(x)
         if (class(x) %in% c('data.frame','list') && !is.null(names(x)))
           cutoff(str_c("[Names] $ ",str_c(names(x), collapse=' ')))
         else small_str(x)
@@ -708,11 +708,11 @@ util$unshorten_url <- function(uri, timeoutsecs=5){
                 #do not stop if requests time out
                 resolved_list <- tryCatch.W.E (eval({
                         opts <- list(
-                                timeout = timeoutsecs, 
-                                maxredirs = 5, 
+                                timeout = timeoutsecs,
+                                maxredirs = 5,
                                 followlocation = TRUE,  # resolve redirects
                                 ssl.verifyhost = FALSE, # suppress certain SSL errors
-                                ssl.verifypeer = FALSE, 
+                                ssl.verifypeer = FALSE,
                                 nobody = TRUE, # perform HEAD request - not guaranteed to return something
                                 verbose = FALSE
                         )
@@ -723,7 +723,7 @@ util$unshorten_url <- function(uri, timeoutsecs=5){
                         as.character(info$effective.url)
                 }))
                 return(resolved_list)
-#                 resolved <- ! is.null(resolved_list[["warning"]])  & 
+#                 resolved <- ! is.null(resolved_list[["warning"]])  &
 #                                 ! is.null(resolved_list[["value"]][["message"]])
 #                 if(resolved){
 #                         resolved_list[["value"]]
@@ -748,7 +748,7 @@ attr(util$unshorten_url, "help") <- "Resolve an anonymous URL given by an URL sh
 util$extractURL<-function(x, s=".") {
         if(grepl(pattern = s,x = x, perl=TRUE, ignore.case = TRUE)){
                 m <- gregexpr('https?\\S+',x, perl = TRUE, ignore.case = TRUE)
-                return(regmatches(x, m))   
+                return(regmatches(x, m))
         }
         x
 }
@@ -757,13 +757,20 @@ util$removeURL <- function(x) gsub('https?://\\S+',"",x, perl = TRUE)
 
 
 util$'%nin%' <- Negate('%in%')
+
+util$skipn <- function(fn, marker="*/"){
+        con <- file(zf,open="r")
+        lines <- readLines(con)
+        skipn <- match(marker, lines) #gets the row index of the close comment
+        skipn
+}
 ########################################
 
 
 
 ########################################
-## Has to be last in file. 
-# After executing this, function is part of global namespace, 
+## Has to be last in file.
+# After executing this, function is part of global namespace,
 # so we do no longer need to fully qualify package name.
 
 while("util" %in% search())
