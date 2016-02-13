@@ -758,7 +758,7 @@ util$extractURL<-function(x, s=".") {
         x
 }
 
-util$removeURL <- function(x) gsub('https?://\\S+',"",x, perl = TRUE)
+util$removeURL <- function(x) gsub('https?://\\S+'," ",x, perl = TRUE)
 
 util$removeStrangeMarkup <- function(x) {
         # remove ed><a0><bc><ed><be><89 and similar
@@ -769,7 +769,7 @@ util$removeStrangeMarkup <- function(x) {
 
 util$removeFirstChars <- function(x, pat="^#|^@|\\s#|\\s@") {
         # remove #hashmarks and @mentions
-        gsub(pat,"",x, perl = TRUE)
+        gsub(pat," ",x, perl = TRUE)
 }
 
 util$'%nin%' <- Negate('%in%')
