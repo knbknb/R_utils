@@ -281,40 +281,42 @@ twitterUtil$makeTableUnique <- function( db.name, table.name = "xx" ){
         conn <- dbConnect(SQLite(), dbname = db.name)
         table.name.unique <- paste0(table.name,  "_unique_", "_", format(Sys.time(), "%Y_%m_%d__%I_%M"))
         # does not need to be part of transaction
+        silent = TRUE
+        
+        RSQLite::dbBegin(conn)
+        
         try({        
                 sql <- paste0("drop table ", table.name.unique)  
                 dbSendQuery(conn, sql)
                 
-        }, silent = TRUE)
-        RSQLite::dbBegin(conn)
-
+        }, silent = silent)
         
         try({        
                 sql <- paste0('CREATE TABLE ', table.name.unique ,' as
                       select * from ', table.name, ' where 1 <> 1 ')
                 warning(sql)
                 dbSendQuery(conn, sql)
-        }, silent = TRUE)
+        }, silent = silent)
         
         try({        
                 sql = paste0("insert into ", table.name.unique, " select distinct * from ", table.name, " ")  
                 dbSendQuery(conn, sql)
-        }, silent = TRUE)
+        }, silent = silent)
     
         try({        
                 sql = paste0("delete from ", table.name, " ")  
                 dbSendQuery(conn, sql)
-        }, silent = TRUE)
+        }, silent = silent)
         
         try({
                 sql = paste0("insert into ", table.name, " select  * from ", table.name.unique)  
                 dbSendQuery(conn, sql)
-        }, silent = TRUE)
+        }, silent = silent)
         
         try({
                 sql = paste0("drop table ", table.name.unique) 
                 dbSendQuery(conn, sql)
-        }, silent = TRUE)   
+        }, silent = silent)   
         
         
         dbCommit(conn)
@@ -350,7 +352,7 @@ twitterUtil$createViewThenRemoveDuplicateCount <- function( db.name, table.name 
                              res.df[dup, colname] )
                 #print(sql)
                 dbSendQuery(conn, sql)
-        }, silent = FALSE)   
+        }, silent = TRUE)   
         dbCommit(conn)
         }
         
@@ -475,12 +477,24 @@ twitterUtil$insertIntoView4AugmentedTweets <- function(tweets.df2, db.name, tabl
                         #                              tweets.df2[x, "datetimestr"], "' where id=", tweets.df2[x, "id"])  
                         dbSendQuery(conn, sql)
                         print(sql)
-                }, silent = TRUE)
+                }, silent = FALSE)
         })
         dbCommit(conn)
         dbDisconnect(conn)
 }
 attr(twitterUtil$insertIntoView4AugmentedTweets, "help") <- "Create view that shows augmented tweets table"
+
+#delete from  qry_wikileaks_augmented where sentiment = 'NA' and id in (select  id  from qry_wikileaks_augmented  group by  id   having  count(id) > 1)
+twitterUtil$getFromDb <- function( db.name, view.name = "qry_potsdam_augmented_view"){
+        conn <- dbConnect(SQLite(), dbname = db.name)
+        
+        sql <- paste0("SELECT * FROM ", view.name)
+        res <- dbSendQuery(conn, sql)
+        res.df <- dbFetch(res, n = 100000)
+        dbDisconnect(conn)
+        res.df
+}
+attr(twitterUtil$getFromDb, "help") <- "Get full datatable or view from sqlite database."
 
 ########################################
 ## Has to be last in file. 
