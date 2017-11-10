@@ -1,14 +1,13 @@
-library(ggplot2)
-library(reshape2)
-library(scales) #pretty_breaks
-library(gridExtra) # several plots on one page
 
-knbknb <- new.env()
+util_knb <- new.env()
 
 ######################################### 
 # functions below added by knb 2011-2017+
 
-knbknb$save.xlsx <- function (file, ...)
+
+
+# describe(save.xlsx)
+util_knb$save.xlsx <- function (file, ...)
 {
   require(xlsx, quietly = TRUE)
   objects <- list(...)
@@ -23,29 +22,30 @@ knbknb$save.xlsx <- function (file, ...)
   }
   print(paste("Workbook", file, "has", nobjects, "worksheets."))
 }
+attr(util_knb$save.xlsx, "help") <- "(filename) -> void // Save objects to several worksheets in an xlsx file."
 
 
-# knbknb$ggtheme <- function (){
+# util_knb$ggtheme <- function (){
 #         theme(panel.background =        element_rect(fill=        "#FFFFFF"),
 #               panel.grid.major.x = element_blank(),
 #               panel.grid.major.y = element_line(colour= "grey",size=0.1),
 #               panel.grid.minor   = element_line(colour="grey",size=0.1))
 # }
 
-knbknb$sysenv_search <- function(pat="."){
+util_knb$sysenv_search <- function(pat="."){
   grep(pat, names(Sys.getenv()),perl=TRUE, value=TRUE)
 }
-attr(knbknb$sysenv_search, "help") <- "Perform a simple grep-search on environment variables, return keys only"
+attr(util_knb$sysenv_search, "help") <- "Perform a simple grep-search on environment variables, return keys only"
 
 
 
-knbknb$sysenv_get <- function(pat="."){
+util_knb$sysenv_get <- function(pat="."){
   varnames <- grep(pat, names(Sys.getenv()),perl=TRUE, value=TRUE)
   Sys.getenv(varnames)
 }
-attr(knbknb$sysenv_get, "help") <- "Perform a simple grep-search on environment variables, return keys _and_ values"
+attr(util_knb$sysenv_get, "help") <- "Perform a simple grep-search on environment variables, return keys _and_ values"
 
-knbknb$tryCatch.W.E <- function(expr){
+util_knb$tryCatch.W.E <- function(expr){
   W <- NULL
   w.handler <- function(w){ # warning handler
     W <<- w
@@ -56,11 +56,11 @@ knbknb$tryCatch.W.E <- function(expr){
     warning = w.handler),
     warning = W)
 }
-attr(knbknb$tryCatch.W.E, "help") <- "from demo(error.catching): 1) catch all errors and warnings (and continue), 2) store the error or warning messages."
+attr(util_knb$tryCatch.W.E, "help") <- "from demo(error.catching): 1) catch all errors and warnings (and continue), 2) store the error or warning messages."
 
 
 
-knbknb$unshorten_url <- function(uri, timeoutsecs=5){
+util_knb$unshorten_url <- function(uri, timeoutsecs=5){
   if(require(RCurl)){
     uri <- as.character(uri)
     if(RCurl::url.exists(uri)){
@@ -103,9 +103,9 @@ knbknb$unshorten_url <- function(uri, timeoutsecs=5){
     uri
   }
 }
-attr(knbknb$unshorten_url, "help") <- "Resolve an anonymous URL given by an URL shortener"
+attr(util_knb$unshorten_url, "help") <- "Resolve an anonymous URL given by an URL shortener"
 
-knbknb$extractURL<-function(x, s=".") {
+util_knb$extractURL<-function(x, s=".") {
   if(grepl(pattern = s,x = x, perl=TRUE, ignore.case = TRUE)){
     m <- gregexpr('https?\\S+',x, perl = TRUE, ignore.case = TRUE)
     return(regmatches(x, m))
@@ -113,67 +113,59 @@ knbknb$extractURL<-function(x, s=".") {
   x
 }
 
-knbknb$removeURL <- function(x) gsub('https?://\\S+'," ",x, perl = TRUE)
+util_knb$removeURL <- function(x) gsub('https?://\\S+'," ",x, perl = TRUE)
 
-knbknb$removeStrangeMarkup <- function(x) {
+util_knb$removeStrangeMarkup <- function(x) {
   # remove ed><a0><bc><ed><be><89 and similar
   x <- gsub('(?:<\\w\\w>)+',"",x, perl = TRUE)
   x <- gsub('(?:\\w\\w><\\w\\w) ?',"",x, perl = TRUE)
   x
 }
 
-knbknb$removeFirstChars <- function(x, pat="^#|^@|\\s#|\\s@") {
+util_knb$removeFirstChars <- function(x, pat="^#|^@|\\s#|\\s@") {
   # remove #hashmarks and @mentions
   gsub(pat," ",x, perl = TRUE)
 }
 
-knbknb$'%nin%' <- Negate('%in%')
+util_knb$'%nin%' <- Negate('%in%')
 
-knbknb$skipn <- function(fn, marker="*/"){
+util_knb$skipn <- function(fn, marker="*/"){
   con <- file(zf,open="r")
   lines <- readLines(con)
   skipn <- match(marker, lines) #gets the row index of the close comment
   skipn
 }
 
-#knbknb$h", utils::head, env=.startup)
-#knbknb$n", base::names, env=.startup)
+#util_knb$h", utils::head, env=.startup)
+#util_knb$n", base::names, env=.startup)
 # same as my bash function i()
-knbknb$ht <- function(d) rbind(head(d,6),tail(d,6))
-knbknb$s <-function()  base::summary
-knbknb$pwd <-function() base::getwd
-#knbknb$cd <-function() base::setwd
-#knbknb$last <- function(x) { rbind(tail(x, n = 1)) }, env=.startup)
-knbknb$pkgs <- function(){as.data.frame(installed.packages()[,c(1,3)],row.names=F)}
-knbknb$ucfirst <- function (str) {  minlen = 3; paste(sapply(strsplit(as.character(str), '\\s', NULL), FUN=function(str){ifelse(nchar(str) > (minlen-1), paste(toupper(substring(str, 1, 1)), tolower(substring(str, 2)), sep = ""), str)}), collapse = " ")}
-#knbknb$describe <- function(obj) {attr(obj, "help")}, env=.startup)
+util_knb$ht <- function(d) rbind(head(d,6),tail(d,6))
+util_knb$s <-function()  base::summary
+util_knb$pwd <-function() base::getwd
+#util_knb$cd <-function() base::setwd
+#util_knb$last <- function(x) { rbind(tail(x, n = 1)) }, env=.startup)
+util_knb$pkgs <- function(){as.data.frame(installed.packages()[,c(1,3)],row.names=F)}
+util_knb$ucfirst <- function (str) {  minlen = 3; paste(sapply(strsplit(as.character(str), '\\s', NULL), FUN=function(str){ifelse(nchar(str) > (minlen-1), paste(toupper(substring(str, 1, 1)), tolower(substring(str, 2)), sep = ""), str)}), collapse = " ")}
 
-# alias to clear console. see  http://stackoverflow.com/questions/14260340/function-to-clear-the-console-in-r. CTRL-L also works.
-knbknb$cls <- function(){cat("\014")}
-# Override q() to not save by default.
-# Same as saying q("no")
-#knbknb$q <- function (save="no", ...) { quit(save=save, ...) }, env=.startup)
+# alias to clear Rstudio console. see  http://stackoverflow.com/questions/14260340/function-to-clear-the-console-in-r. CTRL-L also works.
+util_knb$cls <- function(){cat("\014")}
 
-knbknb$datasets <- function(){ data(package = .packages(all.available = TRUE))}
-knbknb$download <- function(){ 
+util_knb$datasets <- function(){ data(package = .packages(all.available = TRUE))}
+util_knb$download <- function(){ 
   download.file(url,destfile=filename,method="curl", extra="-L")
 }
-attr(knbknb$download, "help") <- "download a file via https, follow redirects"
+attr(util_knb$download, "help") <- "download a file via https, follow redirects"
 
-knbknb$v <- function() {R.version$version.string}
+util_knb$v <- function() {R.version$version.string}
 
-knbknb$readXlsx <- function(fn){
+# util_knb$readXlsx <- function(fn){
+#         data <- util_knb$readFile(fn)
+#         data
+# }
 
-        data <- knbknb$readFile(fn)
-        data
-
-}
-
-knbknb$cleanXlsx <- function(data, badcols){
-
+util_knb$cleanXlsx <- function(data, badcols){
         #data[is.na(data)] <- 0
-
-        data <- knbknb$removeBadCols(data, badcols)
+        data <- util_knb$removeBadCols(data, badcols)
         datecol <- which(names(data) %in% c("LOG_DATE"))
         data[,datecol] <- ymd_hms(data[,datecol], tz = "GMT")
         data
@@ -181,7 +173,7 @@ knbknb$cleanXlsx <- function(data, badcols){
 
 
 # write to pdf. useful when many X11 devices are open
-knbknb$writePDF <- function(d,fn, onefile = TRUE){
+util_knb$writePDF <- function(d,fn, onefile = TRUE){
         pdf1 <- file.path(d,fn)
         print("Abspath PDF Outfile:")
         print(pdf1)
@@ -193,7 +185,7 @@ knbknb$writePDF <- function(d,fn, onefile = TRUE){
 
 ############# func defs st come before func body
 
-knbknb$readFile <- function(fn){
+util_knb$readFile <- function(fn){
         #http://cran.r-project.org/web/packages/openxlsx/vignettes/formatting.pdf
         # errmsg <- sprintf("Cannot read data file '%s'.", fn)
         getOption("openxlsx.datetimeFormat", "yyyy/mm/dd hh:mm:ss")
@@ -201,7 +193,7 @@ knbknb$readFile <- function(fn){
         return(data)
 }
 
-knbknb$removeBadCols <- function(data, badcol=c("EXPEDITION","SITE", "n")){
+util_knb$removeBadCols <- function(data, badcol=c("EXPEDITION","SITE", "n")){
         print(contents(data))
         print(data[1:2,])
         #if( as.logical("EXPEDITION" %in% names(data))){
@@ -215,7 +207,7 @@ knbknb$removeBadCols <- function(data, badcol=c("EXPEDITION","SITE", "n")){
 }
 
 ## is not robust enough
-knbknb$plotFile <- function(data, wd, convertstr=FALSE, fn="ketzindata.pdf"){
+util_knb$plotFile <- function(data, wd, convertstr=FALSE, fn="ketzindata.pdf"){
         # begin processing data
         names(data) <- make.names(names(data))
         #print(contents(data))
@@ -275,17 +267,18 @@ knbknb$plotFile <- function(data, wd, convertstr=FALSE, fn="ketzindata.pdf"){
                 }, error=function(e){print(paste0("error ", str(e)))}, finally=print(paste0("done col:", xx)))
         }
         outf <- fn
-        knbknb$writePDF (wd,outf)
+        util_knb$writePDF (wd,outf)
         #dev.off()
 
 }
-knbknb$wrapString <-  function(vector_of_strings,width){
+
+util_knb$wrapString <-  function(vector_of_strings,width){
         #http://stackoverflow.com/questions/7367138/text-wrap-for-plot-titles-in-r
         sapply(vector_of_strings,FUN=function(x){paste (strwrap(x,width=width), collapse="\n")
                                                  })
 }
 
-knbknb$findYearStr <- function(v){
+util_knb$findYearStr <- function(v){
         # example:
         # return "2012 - 2013" if min and max are different,
         # return "2012" if they aren't
@@ -299,52 +292,58 @@ knbknb$findYearStr <- function(v){
 
 }
 
-knbknb$ggplotFile <- function(data, fn=""){
-        errmsg <- sprintf("Cannot plot data file '%s'.", fn)
-        data2 <- melt(data,id.vars = names(data)[1], variable.names=names(data)[-1])
-        p <- list()
-        #first column shows x-axis
-        for (x in names(data)[-1]){
+util_knb$ggplotFile <- function(data, fn="") {
+  require(ggplot2, quietly = TRUE)
+  require(reshape2, quietly = TRUE)
+  require(scales, quietly = TRUE) # pretty_breaks
+  require(gridExtra, quietly = TRUE) # several plots on one page
+  
+  # errmsg <- sprintf("Cannot plot data file '%s'.", fn)
+  data2 <- melt(data, id.vars = names(data)[1], variable.names = names(data)[-1])
+  p <- list()
+  # first column shows x-axis
+  for (x in names(data)[-1]) {
+    tryCatch(
+      {
+        # xx <- ifelse(!is.na(x),x,0) #, xlab=as.character(year(data[1,1]))
+        # plot( data[,1], data[,x], ylab="", xlim=c(ymd("2008-01-01"),ymd(today())), ylim=c(0,1000), ymin=0, ymax=1000 ,type="l", main=xx)
+        # qplot(  data[,1], data[,x], ymin=0, ymax=1000 , main=xx) #, ylab="", geom="l",
+        # scale_y_continuous(breaks = round(seq(min(data3$x), max(dat$x), by = 0.5),1)) +
+        # x = "KTZI201_WF_DRUCK"
+        data3 <- data2[data2$variable == x, ]
 
-                tryCatch({
-                        #xx <- ifelse(!is.na(x),x,0) #, xlab=as.character(year(data[1,1]))
-                        #plot( data[,1], data[,x], ylab="", xlim=c(ymd("2008-01-01"),ymd(today())), ylim=c(0,1000), ymin=0, ymax=1000 ,type="l", main=xx)
-                        #qplot(  data[,1], data[,x], ymin=0, ymax=1000 , main=xx) #, ylab="", geom="l",
-                        #scale_y_continuous(breaks = round(seq(min(data3$x), max(dat$x), by = 0.5),1)) +
-                        #x = "KTZI201_WF_DRUCK"
-                        data3 <- data2[data2$variable == x,]
+        # data3["n.a." ==  data3$value,"value"] <- NA
+        data3$value <- as.numeric(data3$value)
+        xlabel <- util_knb$findYearStr(data3[, 1])
+        ptitle <- paste0(x, "\n", util_knb$wrapString(fn, nchar(fn) / 5))
+        pbr <- pretty_breaks(n = 10)
+        if (!all(is.na(data3$value))) {
+          p[x] <- list(ggplot(data = data3, aes(x = LOG_DATE, y = value)) +
+            geom_point(alpha = 1 / 3, na.rm = TRUE) +
+            labs(title = ptitle) +
+            labs(x = xlabel) +
+            theme_bw(base_family = "", base_size = 10) +
+            scale_y_continuous(breaks = pbr) +
 
-                        #data3["n.a." ==  data3$value,"value"] <- NA
-                        data3$value <- as.numeric(data3$value)
-                        xlabel <- knbknb$findYearStr(data3[,1])
-                        ptitle <- paste0(x, "\n", knbknb$wrapString(fn, nchar(fn)/5))
-                        pbr <- pretty_breaks(n=10)
-                        if(! all(is.na(data3$value))){
-                                p[x] <-  list(ggplot(data = data3, aes(x = LOG_DATE, y = value)) +
-                                                      geom_point(alpha = 1/3, na.rm = TRUE)  +
-                                         labs(title = ptitle) +
-                                         labs(x = xlabel) +
-                                         theme_bw(base_family = "", base_size = 10) +
-                                                scale_y_continuous(breaks = pbr) +
-
-                                        facet_grid(variable ~ .))
-                        }
-                }, error=function(e){print(paste0("error ", str(e))); stop()},
-                finally=print(paste0("done col:", x)))
+            facet_grid(variable ~ .))
         }
-        #unique(data3$variable)
-        p["nrow"] = length(p)
-        p
-
-
+      }, error = function(e) {
+        print(paste0("error ", str(e)))
+        stop()
+      },
+      finally = print(paste0("done col:", x))
+    )
+  }
+  # unique(data3$variable)
+  p["nrow"] <- length(p)
+  p
 }
-
 # Here is a simple R function that will find time series outliers
 # (and optionally show them in a plot).
 # It will handle seasonal and non-seasonal time series.
 # by Rob Hyndman ()
 # https://stats.stackexchange.com/a/1153/20107
-knbknb$tsoutliers <- function(x,plot=FALSE)
+util_knb$tsoutliers <- function(x,plot=FALSE)
 {
         x <- as.ts(x)
         if(frequency(x)>1)
@@ -352,6 +351,7 @@ knbknb$tsoutliers <- function(x,plot=FALSE)
         else
         {
                 tt <- 1:length(x)
+                tt <- tt + 0
                 resid <- residuals(loess(x ~ tt))
         }
         resid.q <- quantile(resid,prob=c(0.25,0.75))
@@ -372,7 +372,8 @@ knbknb$tsoutliers <- function(x,plot=FALSE)
 }
 
 
-knbknb$download_13fs <-  function(cik = "0001079114"){
+util_knb$download_13fs <-  function(cik = "0001079114"){
+  require(xml2, quietly = TRUE)
   all_13FS_overview <- sprintf('https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=%s&type=13F-HR&dateb=&owner=include&count=400', cik)
   all_13FS_overview_html <- read_html(all_13FS_overview)
   all_13FS_overview_urls <- html_attr(html_nodes(all_13FS_overview_html, "#documentsbutton"), "href")
@@ -382,7 +383,8 @@ knbknb$download_13fs <-  function(cik = "0001079114"){
   
 }
 
-knbknb$filingdates_of_13fs <- function(cik = "0001079114"){
+util_knb$filingdates_of_13fs <- function(cik = "0001079114"){
+  require(xml2, quietly = TRUE)
   all_13FS_overview <- sprintf('https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=%s&type=13F-HR&dateb=&owner=include&count=400', cik)
   all_13FS_overview_html <- read_html(all_13FS_overview)
   all_13FS_overview_years <- html_table(all_13FS_overview_html)[[3]][, c(3,4)]
@@ -392,7 +394,7 @@ knbknb$filingdates_of_13fs <- function(cik = "0001079114"){
   
 }
 
-knbknb$persistent_obj <- function(outdir = ".", outfile = ""){
+util_knb$persistent_obj <- function(outdir = ".", outfile = ""){
   outfile <- paste0(outdir, outfile)
   dir.create(outdir, showWarnings = FALSE)
   
@@ -409,6 +411,6 @@ knbknb$persistent_obj <- function(outdir = ".", outfile = ""){
 
 ########################################
 ## Has to be last in file
-while("knbknb" %in% search())
-        detach("knbknb")
-attach(knbknb)
+while("util_knb" %in% search())
+        detach("util_knb")
+attach(util_knb)
