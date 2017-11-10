@@ -2,6 +2,8 @@
 # Utilities to make R a happier place
 # Brendan O'Connor, brenocon.com/code - see bottom of file
 
+# call "docstrings" with describe(), e,g, describe(read.tsv)
+# describe() is also mentioned in this file
 
 ########################################
 ## Tell R the terminal width.  Needs to be re-run every time you resize the
@@ -12,7 +14,7 @@
 if ( (numcol <-Sys.getenv("COLUMNS")) != "") {
   numcol = as.integer(numcol)
   options(width= numcol - 1)
-  rm(numcol)
+  
 } else if (Sys.info()['sysname'] == 'Darwin') {
   # I think this is a mac-only stty output format.
   # TODO need to prevent this from executing when under GUI
@@ -24,7 +26,7 @@ if ( (numcol <-Sys.getenv("COLUMNS")) != "") {
     }
   }
   rm(output)
-  rm(numcol)
+  
 } else {
   #http://stackoverflow.com/a/1172884/202553 -modified
   #options(width=as.integer(system("stty -a | head -n 1 | awk '{print $7}' | sed 's/;//'", intern=T)))
@@ -37,13 +39,14 @@ if ( (numcol <-Sys.getenv("COLUMNS")) != "") {
   }
   wideScreen()
 }
-
+rm(numcol)
 
 ########################################
-## Put everything into an environment, to not pollute global namespace
+## Put everything into an environment, to not pollute global namespace by default
 
 util = new.env()
 
+util$describe <- function(obj) attr(obj, "help")
 
 ########################################
 ## Better I/O routines
@@ -644,156 +647,9 @@ util$binary_eval <- function(pred,labels, cutoff='naive', repar=TRUE, ...) {
 
   invisible(rocr_pred)
 }
-######################################### 
-# functions below added by knb 2011-2017+
-
-util$save.xlsx <- function (file, ...)
-  {
-      require(xlsx, quietly = TRUE)
-      objects <- list(...)
-      fargs <- as.list(match.call(expand.dots = TRUE))
-      objnames <- as.character(fargs)[-c(1, 2)]
-      nobjects <- length(objects)
-      for (i in 1:nobjects) {
-          if (i == 1)
-              write.xlsx(objects[[i]], file, sheetName = objnames[i])
-          else write.xlsx(objects[[i]], file, sheetName = objnames[i],
-              append = TRUE)
-      }
-      print(paste("Workbook", file, "has", nobjects, "worksheets."))
-}
+attr(util$binary_eval, "help") <- "Various binary classification evaluation plots and metrics"
 
 
-# util$ggtheme <- function (){
-#         theme(panel.background =        element_rect(fill=        "#FFFFFF"),
-#               panel.grid.major.x = element_blank(),
-#               panel.grid.major.y = element_line(colour= "grey",size=0.1),
-#               panel.grid.minor   = element_line(colour="grey",size=0.1))
-# }
-
-util$sysenv_search <- function(pat="."){
-        grep(pat, names(Sys.getenv()),perl=TRUE, value=TRUE)
-}
-attr(util$sysenv_search, "help") <- "Perform a simple grep-search on environment variables, return keys only"
-
-
-
-util$sysenv_get <- function(pat="."){
-        varnames <- grep(pat, names(Sys.getenv()),perl=TRUE, value=TRUE)
-        Sys.getenv(varnames)
-}
-attr(util$sysenv_get, "help") <- "Perform a simple grep-search on environment variables, return keys _and_ values"
-
-util$tryCatch.W.E <- function(expr){
-        W <- NULL
-        w.handler <- function(w){ # warning handler
-         	W <<- w
-         	invokeRestart("muffleWarning")
-        }
-        list(value = withCallingHandlers(
-                tryCatch(expr, error = function(e) e),
-                warning = w.handler),
-    	 warning = W)
-}
-attr(util$tryCatch.W.E, "help") <- "from demo(error.catching): 1) catch all errors and warnings (and continue), 2) store the error or warning messages."
-
-
-
-util$unshorten_url <- function(uri, timeoutsecs=5){
-    if(require(RCurl)){
-        uri <- as.character(uri)
-        if(RCurl::url.exists(uri)){
-                # from listCurlOptions()
-                #do not stop if requests time out
-                resolved_list <- tryCatch.W.E (eval({
-                        opts <- list(
-                                timeout = timeoutsecs,
-                                maxredirs = 5,
-                                followlocation = TRUE,  # resolve redirects
-                                ssl.verifyhost = FALSE, # suppress certain SSL errors
-                                ssl.verifypeer = FALSE,
-                                nobody = TRUE, # perform HEAD request - not guaranteed to return something
-                                verbose = FALSE
-                        )
-                        curlhandle = getCurlHandle(.opts = opts)
-                        getURL(uri, curl = curlhandle)
-                        info <- getCurlInfo(curlhandle)
-                        rm(curlhandle)  # release the curlhandle!
-                        as.character(info$effective.url)
-                }))
-                return(resolved_list)
-#                 resolved <- ! is.null(resolved_list[["warning"]])  &
-#                                 ! is.null(resolved_list[["value"]][["message"]])
-#                 if(resolved){
-#                         resolved_list[["value"]]
-#                 } else {
-#                         #mesg <- resolved_list["warning"]["message"]
-#                         warning(paste("cannot resolve url:", uri, "\n"))
-#                         uri
-#                 }
-        } else {
-                # just return the url as-is
-                warning(paste0("url invalid, or 404 error: ", uri, "\n"))
-                uri
-        }
-   } else {
-        # just return the url as-is
-        printf(paste0("cannot load package RCurl, returning as-is:", uri, "\n"))
-        uri
-   }
-}
-attr(util$unshorten_url, "help") <- "Resolve an anonymous URL given by an URL shortener"
-
-util$extractURL<-function(x, s=".") {
-        if(grepl(pattern = s,x = x, perl=TRUE, ignore.case = TRUE)){
-                m <- gregexpr('https?\\S+',x, perl = TRUE, ignore.case = TRUE)
-                return(regmatches(x, m))
-        }
-        x
-}
-
-util$removeURL <- function(x) gsub('https?://\\S+'," ",x, perl = TRUE)
-
-util$removeStrangeMarkup <- function(x) {
-        # remove ed><a0><bc><ed><be><89 and similar
-        x <- gsub('(?:<\\w\\w>)+',"",x, perl = TRUE)
-        x <- gsub('(?:\\w\\w><\\w\\w) ?',"",x, perl = TRUE)
-        x
-}
-
-util$removeFirstChars <- function(x, pat="^#|^@|\\s#|\\s@") {
-        # remove #hashmarks and @mentions
-        gsub(pat," ",x, perl = TRUE)
-}
-
-util$'%nin%' <- Negate('%in%')
-
-util$skipn <- function(fn, marker="*/"){
-        con <- file(zf,open="r")
-        lines <- readLines(con)
-        skipn <- match(marker, lines) #gets the row index of the close comment
-        skipn
-}
-
-#util$h", utils::head, env=.startup)
-#util$n", base::names, env=.startup)
-# same as my bash function i()
-util$ht <- function(d) rbind(head(d,6),tail(d,6))
-util$s <-function()  base::summary
-util$pwd <-function() base::getwd
-#util$cd <-function() base::setwd
-#util$last <- function(x) { rbind(tail(x, n = 1)) }, env=.startup)
-util$pkgs <- function(){as.data.frame(installed.packages()[,c(1,3)],row.names=F)}
-util$ucfirst <- function (str) {  minlen = 3; paste(sapply(strsplit(as.character(str), '\\s', NULL), FUN=function(str){ifelse(nchar(str) > (minlen-1), paste(toupper(substring(str, 1, 1)), tolower(substring(str, 2)), sep = ""), str)}), collapse = " ")}
-#util$describe <- function(obj) {attr(obj, "help")}, env=.startup)
-
-# alias to clear console. see  http://stackoverflow.com/questions/14260340/function-to-clear-the-console-in-r. CTRL-L also works.
-util$cls <- function(){cat("\014")}
-# Override q() to not save by default.
-# Same as saying q("no")
-#util$q <- function (save="no", ...) { quit(save=save, ...) }, env=.startup)
-
-util$datasets <- function(){ data(package = .packages(all.available = TRUE))}
 ########################################
 
 

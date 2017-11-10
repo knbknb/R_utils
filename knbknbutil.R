@@ -5,6 +5,163 @@ library(gridExtra) # several plots on one page
 
 knbknb <- new.env()
 
+######################################### 
+# functions below added by knb 2011-2017+
+
+knbknb$save.xlsx <- function (file, ...)
+{
+  require(xlsx, quietly = TRUE)
+  objects <- list(...)
+  fargs <- as.list(match.call(expand.dots = TRUE))
+  objnames <- as.character(fargs)[-c(1, 2)]
+  nobjects <- length(objects)
+  for (i in 1:nobjects) {
+    if (i == 1)
+      write.xlsx(objects[[i]], file, sheetName = objnames[i])
+    else write.xlsx(objects[[i]], file, sheetName = objnames[i],
+                    append = TRUE)
+  }
+  print(paste("Workbook", file, "has", nobjects, "worksheets."))
+}
+
+
+# knbknb$ggtheme <- function (){
+#         theme(panel.background =        element_rect(fill=        "#FFFFFF"),
+#               panel.grid.major.x = element_blank(),
+#               panel.grid.major.y = element_line(colour= "grey",size=0.1),
+#               panel.grid.minor   = element_line(colour="grey",size=0.1))
+# }
+
+knbknb$sysenv_search <- function(pat="."){
+  grep(pat, names(Sys.getenv()),perl=TRUE, value=TRUE)
+}
+attr(knbknb$sysenv_search, "help") <- "Perform a simple grep-search on environment variables, return keys only"
+
+
+
+knbknb$sysenv_get <- function(pat="."){
+  varnames <- grep(pat, names(Sys.getenv()),perl=TRUE, value=TRUE)
+  Sys.getenv(varnames)
+}
+attr(knbknb$sysenv_get, "help") <- "Perform a simple grep-search on environment variables, return keys _and_ values"
+
+knbknb$tryCatch.W.E <- function(expr){
+  W <- NULL
+  w.handler <- function(w){ # warning handler
+    W <<- w
+    invokeRestart("muffleWarning")
+  }
+  list(value = withCallingHandlers(
+    tryCatch(expr, error = function(e) e),
+    warning = w.handler),
+    warning = W)
+}
+attr(knbknb$tryCatch.W.E, "help") <- "from demo(error.catching): 1) catch all errors and warnings (and continue), 2) store the error or warning messages."
+
+
+
+knbknb$unshorten_url <- function(uri, timeoutsecs=5){
+  if(require(RCurl)){
+    uri <- as.character(uri)
+    if(RCurl::url.exists(uri)){
+      # from listCurlOptions()
+      #do not stop if requests time out
+      resolved_list <- tryCatch.W.E (eval({
+        opts <- list(
+          timeout = timeoutsecs,
+          maxredirs = 5,
+          followlocation = TRUE,  # resolve redirects
+          ssl.verifyhost = FALSE, # suppress certain SSL errors
+          ssl.verifypeer = FALSE,
+          nobody = TRUE, # perform HEAD request - not guaranteed to return something
+          verbose = FALSE
+        )
+        curlhandle = getCurlHandle(.opts = opts)
+        getURL(uri, curl = curlhandle)
+        info <- getCurlInfo(curlhandle)
+        rm(curlhandle)  # release the curlhandle!
+        as.character(info$effective.url)
+      }))
+      return(resolved_list)
+      #                 resolved <- ! is.null(resolved_list[["warning"]])  &
+      #                                 ! is.null(resolved_list[["value"]][["message"]])
+      #                 if(resolved){
+      #                         resolved_list[["value"]]
+      #                 } else {
+      #                         #mesg <- resolved_list["warning"]["message"]
+      #                         warning(paste("cannot resolve url:", uri, "\n"))
+      #                         uri
+      #                 }
+    } else {
+      # just return the url as-is
+      warning(paste0("url invalid, or 404 error: ", uri, "\n"))
+      uri
+    }
+  } else {
+    # just return the url as-is
+    printf(paste0("cannot load package RCurl, returning as-is:", uri, "\n"))
+    uri
+  }
+}
+attr(knbknb$unshorten_url, "help") <- "Resolve an anonymous URL given by an URL shortener"
+
+knbknb$extractURL<-function(x, s=".") {
+  if(grepl(pattern = s,x = x, perl=TRUE, ignore.case = TRUE)){
+    m <- gregexpr('https?\\S+',x, perl = TRUE, ignore.case = TRUE)
+    return(regmatches(x, m))
+  }
+  x
+}
+
+knbknb$removeURL <- function(x) gsub('https?://\\S+'," ",x, perl = TRUE)
+
+knbknb$removeStrangeMarkup <- function(x) {
+  # remove ed><a0><bc><ed><be><89 and similar
+  x <- gsub('(?:<\\w\\w>)+',"",x, perl = TRUE)
+  x <- gsub('(?:\\w\\w><\\w\\w) ?',"",x, perl = TRUE)
+  x
+}
+
+knbknb$removeFirstChars <- function(x, pat="^#|^@|\\s#|\\s@") {
+  # remove #hashmarks and @mentions
+  gsub(pat," ",x, perl = TRUE)
+}
+
+knbknb$'%nin%' <- Negate('%in%')
+
+knbknb$skipn <- function(fn, marker="*/"){
+  con <- file(zf,open="r")
+  lines <- readLines(con)
+  skipn <- match(marker, lines) #gets the row index of the close comment
+  skipn
+}
+
+#knbknb$h", utils::head, env=.startup)
+#knbknb$n", base::names, env=.startup)
+# same as my bash function i()
+knbknb$ht <- function(d) rbind(head(d,6),tail(d,6))
+knbknb$s <-function()  base::summary
+knbknb$pwd <-function() base::getwd
+#knbknb$cd <-function() base::setwd
+#knbknb$last <- function(x) { rbind(tail(x, n = 1)) }, env=.startup)
+knbknb$pkgs <- function(){as.data.frame(installed.packages()[,c(1,3)],row.names=F)}
+knbknb$ucfirst <- function (str) {  minlen = 3; paste(sapply(strsplit(as.character(str), '\\s', NULL), FUN=function(str){ifelse(nchar(str) > (minlen-1), paste(toupper(substring(str, 1, 1)), tolower(substring(str, 2)), sep = ""), str)}), collapse = " ")}
+#knbknb$describe <- function(obj) {attr(obj, "help")}, env=.startup)
+
+# alias to clear console. see  http://stackoverflow.com/questions/14260340/function-to-clear-the-console-in-r. CTRL-L also works.
+knbknb$cls <- function(){cat("\014")}
+# Override q() to not save by default.
+# Same as saying q("no")
+#knbknb$q <- function (save="no", ...) { quit(save=save, ...) }, env=.startup)
+
+knbknb$datasets <- function(){ data(package = .packages(all.available = TRUE))}
+knbknb$download <- function(){ 
+  download.file(url,destfile=filename,method="curl", extra="-L")
+}
+attr(knbknb$download, "help") <- "download a file via https, follow redirects"
+
+knbknb$v <- function() {R.version$version.string}
+
 knbknb$readXlsx <- function(fn){
 
         data <- knbknb$readFile(fn)
@@ -187,7 +344,7 @@ knbknb$ggplotFile <- function(data, fn=""){
 # It will handle seasonal and non-seasonal time series.
 # by Rob Hyndman ()
 # https://stats.stackexchange.com/a/1153/20107
-tsoutliers <- function(x,plot=FALSE)
+knbknb$tsoutliers <- function(x,plot=FALSE)
 {
         x <- as.ts(x)
         if(frequency(x)>1)
@@ -213,6 +370,41 @@ tsoutliers <- function(x,plot=FALSE)
         else
                 return(score)
 }
+
+
+knbknb$download_13fs <-  function(cik = "0001079114"){
+  all_13FS_overview <- sprintf('https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=%s&type=13F-HR&dateb=&owner=include&count=400', cik)
+  all_13FS_overview_html <- read_html(all_13FS_overview)
+  all_13FS_overview_urls <- html_attr(html_nodes(all_13FS_overview_html, "#documentsbutton"), "href")
+  all_13FS_overview_urls <- paste0("https://www.sec.gov", all_13FS_overview_urls)
+  all_13FS_overview_urls_html <- map(all_13FS_overview_urls, read_html)
+  all_13FS_overview_urls_html
+  
+}
+
+knbknb$filingdates_of_13fs <- function(cik = "0001079114"){
+  all_13FS_overview <- sprintf('https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=%s&type=13F-HR&dateb=&owner=include&count=400', cik)
+  all_13FS_overview_html <- read_html(all_13FS_overview)
+  all_13FS_overview_years <- html_table(all_13FS_overview_html)[[3]][, c(3,4)]
+  all_13FS_overview_years[,1] <- gsub("-", "", stri_extract_last_regex(str = all_13FS_overview_years[,1],
+                                                                       pattern="\\d+-\\d+-\\d+"))
+  all_13FS_overview_years
+  
+}
+
+knbknb$persistent_obj <- function(outdir = ".", outfile = ""){
+  outfile <- paste0(outdir, outfile)
+  dir.create(outdir, showWarnings = FALSE)
+  
+  all_13FS_overview_urls_html <- download_13fs(outfile)
+  all_13FS_overview_urls_html_chr <- map(all_13FS_overview_urls_html,
+                                         as, "character")
+  
+  saveRDS(object = all_13FS_overview_urls_html_chr, file=outfile)
+  outfile
+}
+
+
 
 
 ########################################
