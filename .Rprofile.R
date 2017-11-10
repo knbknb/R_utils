@@ -29,9 +29,9 @@ tryCatch({
         if (interactive()) {
                 #library(lookup)
                 library(colorout) # Colorize R output in terminal
-                library(tibble) # for rstudio clipboard
-                library(clipr) # for rstudio clipboard
-                library(knitr) # important for rstudio
+                #library(tibble) # for rstudio clipboard
+                #library(clipr) # for rstudio clipboard
+                #library(knitr) # important for rstudio
                 options(colorout.anyterm = TRUE)
                 q <- function(save="no", ...) {
                   quit(save = save, ...)
