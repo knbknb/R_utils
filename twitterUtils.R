@@ -281,72 +281,84 @@ twitterUtil$makeTableUnique <- function( db.name, table.name = "xx" ){
         conn <- dbConnect(SQLite(), dbname = db.name)
         table.name.unique <- paste0(table.name,  "_unique_", "_", format(Sys.time(), "%Y_%m_%d__%I_%M"))
         # does not need to be part of transaction
+        silent = TRUE
+        
+        RSQLite::dbBegin(conn)
+        
         try({        
                 sql <- paste0("drop table ", table.name.unique)  
                 dbSendQuery(conn, sql)
                 
-        }, silent = TRUE)
-        RSQLite::dbBegin(conn)
-
+        }, silent = silent)
         
         try({        
                 sql <- paste0('CREATE TABLE ', table.name.unique ,' as
                       select * from ', table.name, ' where 1 <> 1 ')
                 warning(sql)
                 dbSendQuery(conn, sql)
-        }, silent = TRUE)
+        }, silent = silent)
         
         try({        
                 sql = paste0("insert into ", table.name.unique, " select distinct * from ", table.name, " ")  
                 dbSendQuery(conn, sql)
-        }, silent = TRUE)
+        }, silent = silent)
     
         try({        
                 sql = paste0("delete from ", table.name, " ")  
                 dbSendQuery(conn, sql)
-        }, silent = TRUE)
+        }, silent = silent)
         
         try({
                 sql = paste0("insert into ", table.name, " select  * from ", table.name.unique)  
                 dbSendQuery(conn, sql)
-        }, silent = TRUE)
+        }, silent = silent)
         
         try({
                 sql = paste0("drop table ", table.name.unique) 
                 dbSendQuery(conn, sql)
-        }, silent = TRUE)   
+        }, silent = silent)   
         
         
         dbCommit(conn)
         
         dbDisconnect(conn)
 }
-attr(twitterUtil$makeTableUnique, "help") <- "only keep unique records in any table. Copy into temptable, delete, copy back, drop."
+attr(twitterUtil$makeTableUnique, "help") <- "Pass in any table name (as function parameter), only keep unique records in any table: Copy into temptable, delete, copy back, drop temptable."
 
 
 
-twitterUtil$makeTableUnique2 <- function( db.name, table.name = "xx" ){
+twitterUtil$createViewThenRemoveDuplicateCount <- function( db.name, table.name = "xx", colname="favoriteCount" ){
         conn <- dbConnect(SQLite(), dbname = db.name)
 
         try({
+                view.name <- paste0(table.name, "_", colname, "_dup")
                 # create a view with duplicates, same tweet with incremental  
-                sql = paste0("CREATE VIEW ", table.name, "_dup as select  id, min(favoriteCount), count(id) as fc from ", table.name , 
+                sql = paste0("CREATE VIEW ", view.name ," as select  id, max(", colname ,") as ", colname,", count(id) as cnt from ", table.name , 
                              " t1 group by  id   having  count(id) > 1")
                 print(sql)
                 dbSendQuery(conn, sql)
         }, silent = TRUE)   
-        RSQLite::dbBegin(conn)
+        # get ids 
+        sql <- paste0("SELECT distinct id, ", colname, " FROM ", view.name, " ORDER BY id, ", colname)
+        res <- dbSendQuery(conn, sql)
+        res.df <- dbFetch(res)
+        dbClearResult(res)
+        for (dup in 1:nrow(res.df)){
+                RSQLite::dbBegin(conn)   
+     
         try({
                 # delete these duplicates
-                sql = paste0("delete from ", table.name, " where id + favoriteCount in (select  id +  favoriteCount from  ", table.name, "_dup")
-                print(sql)
+                sql = paste0("delete from ", table.name, " where id=" ,res.df[dup, "id"], " and ", colname, " != ", 
+                             res.df[dup, colname] )
+                #print(sql)
                 dbSendQuery(conn, sql)
         }, silent = TRUE)   
         dbCommit(conn)
+        }
         
         dbDisconnect(conn)
 }
-attr(twitterUtil$makeTableUnique2, "help") <- "only keep unique records in any table. Copy into temptable, delete, copy back, drop."
+attr(twitterUtil$createViewThenRemoveDuplicateCount, "help") <- "Pass in any table name (as function parameter), only keep unique records in any table: Copy into temptable, delete, copy back, drop temptable."
 
 twitterUtil$addAugmentedTable <- function( db.name, table.name = "_augmented", table.main.name="_tabname"){
         conn <- dbConnect(SQLite(), dbname = db.name)
@@ -380,9 +392,9 @@ twitterUtil$addAugmentedTable <- function( db.name, table.name = "_augmented", t
         
         dbDisconnect(conn)
 }
-attr(twitterUtil$addAugmentedTable, "help") <- "add an augmented table which holds custom attributes, and a view lining the two tables"
+attr(twitterUtil$addAugmentedTable, "help") <- "Add an augmented table which holds custom attributes, and a view lining the two tables"
 
-twitterUtil$addAugmentedTweetsTable <- function( db.name, table.name = "_augmented", table.main.name="_tabname"){
+twitterUtil$addAugmentedTweetsTableAndView <- function( db.name, table.name = "_augmented", table.main.name="_tabname"){
         conn <- dbConnect(SQLite(), dbname = db.name)
         RSQLite::dbBegin(conn)
         try({   
@@ -415,7 +427,7 @@ twitterUtil$addAugmentedTweetsTable <- function( db.name, table.name = "_augment
         
         dbDisconnect(conn)
 }
-attr(twitterUtil$addAugmentedTweetsTable, "help") <- "add an augmented table which holds custom attributes for tweets, and a view linking the two tables"
+attr(twitterUtil$addAugmentedTweetsTableAndView, "help") <- "Add an augmented table which holds custom attributes for tweets, and a view linking the two tables. Ignore error if either table or views exists"
 
 twitterUtil$createView4DuplicateIDs <- function( db.name, table.name){
         conn <- dbConnect(SQLite(), dbname = db.name)
@@ -452,9 +464,9 @@ twitterUtil$createView4DuplicateIDs <- function( db.name, table.name){
         dbDisconnect(conn)
         #duplicates
 }
-attr(twitterUtil$createView4DuplicateIDs, "help") <- "create view that shows duplicate ids for Accounts that change frequently"
+attr(twitterUtil$createView4DuplicateIDs, "help") <- "Create view that shows duplicate ids for Accounts that change frequently"
 
-twitterUtil$createView4AugmentedTweets <- function(tweets.df2, db.name, table.name.augmented, table.name){
+twitterUtil$insertIntoView4AugmentedTweets <- function(tweets.df2, db.name, table.name.augmented, table.name){
         conn <- dbConnect(SQLite(), dbname = db.name)
         RSQLite::dbBegin(conn)
         sapply(1:nrow(tweets.df2), function(x){
@@ -465,12 +477,24 @@ twitterUtil$createView4AugmentedTweets <- function(tweets.df2, db.name, table.na
                         #                              tweets.df2[x, "datetimestr"], "' where id=", tweets.df2[x, "id"])  
                         dbSendQuery(conn, sql)
                         print(sql)
-                }, silent = TRUE)
+                }, silent = FALSE)
         })
         dbCommit(conn)
         dbDisconnect(conn)
 }
-attr(twitterUtil$createView4AugmentedTweets, "help") <- "create view that shows augmented tweets table"
+attr(twitterUtil$insertIntoView4AugmentedTweets, "help") <- "Create view that shows augmented tweets table"
+
+#delete from  qry_wikileaks_augmented where sentiment = 'NA' and id in (select  id  from qry_wikileaks_augmented  group by  id   having  count(id) > 1)
+twitterUtil$getFromDb <- function( db.name, view.name = "qry_potsdam_augmented_view"){
+        conn <- dbConnect(SQLite(), dbname = db.name)
+        
+        sql <- paste0("SELECT * FROM ", view.name)
+        res <- dbSendQuery(conn, sql)
+        res.df <- dbFetch(res, n = 100000)
+        dbDisconnect(conn)
+        res.df
+}
+attr(twitterUtil$getFromDb, "help") <- "Get full datatable or view from sqlite database."
 
 ########################################
 ## Has to be last in file. 
