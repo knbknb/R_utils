@@ -3,9 +3,6 @@
 # Brendan O'Connor, brenocon.com/code - see bottom of file
 
 
-
-
-
 ########################################
 ## Tell R the terminal width.  Needs to be re-run every time you resize the
 ## terminal, so source() this file
@@ -15,7 +12,7 @@
 if ( (numcol <-Sys.getenv("COLUMNS")) != "") {
   numcol = as.integer(numcol)
   options(width= numcol - 1)
-
+  rm(numcol)
 } else if (Sys.info()['sysname'] == 'Darwin') {
   # I think this is a mac-only stty output format.
   # TODO need to prevent this from executing when under GUI
@@ -27,6 +24,7 @@ if ( (numcol <-Sys.getenv("COLUMNS")) != "") {
     }
   }
   rm(output)
+  rm(numcol)
 } else {
   #http://stackoverflow.com/a/1172884/202553 -modified
   #options(width=as.integer(system("stty -a | head -n 1 | awk '{print $7}' | sed 's/;//'", intern=T)))
@@ -39,7 +37,7 @@ if ( (numcol <-Sys.getenv("COLUMNS")) != "") {
   }
   wideScreen()
 }
-rm(numcol)
+
 
 ########################################
 ## Put everything into an environment, to not pollute global namespace
@@ -97,12 +95,6 @@ util$rmNullObs <- function(x) {
 
 util$as.c <- as.character
 
-util$unwhich <- function(indices, len=length(indices)) {
-  ret <- rep(FALSE,len)
-  ret[indices] <- TRUE
-  ret
-}
-attr(util$unwhich, "help") <- "# reverse of which(): from indices to boolean mask."
 
 util$nna <- function(...) !is.na(...)   # i type this a lot, i think its worth 3 characters + shift key
 
@@ -142,9 +134,8 @@ util$trim_levels.data.frame <- function(x) {
   x
 }
 
-util$prio_check = function(...) {
-  # priority-order, 3-value-logic backoff
-  # the first argument that is not NA or NULL, return it.
+
+util$coalesce = function(...) {
   vars = list(...)
   for (i in 1:length(vars)) {
     if (!is.null(vars[[i]]) && !is.na(vars[[i]]))
@@ -152,6 +143,8 @@ util$prio_check = function(...) {
   }
   FALSE
 }
+attr(util$coalesce, "help") <- "the first argument that is not NA or NULL, return it"
+
 
 util$grid_points <- function(min=1,max) {
   x = min
@@ -164,17 +157,6 @@ util$grid_points <- function(min=1,max) {
 }
 attr(util$grid_points, "help") <- "grid_points(1, 40) returns 1,2,5,10,20,50 ... kinda-exponential scaling, nice for grid search"
 
-# grep() returns indices of matches.  Variants:
-
-util$bgrep <- function(pat,x, ...) {
-  unwhich(grep(pat,x,...), length(x))
-}
-attr(util$bgrep, "help") <- "'boolean' grep: return a logical vector ready for vector ops, like & |  and others"
-
-util$ngrep <- function(pat,x, ...)
-  x[grep(pat,x,...)]
-attr(util$bgrep, "help") <- "'normal' grep: return values, not indices"
-
 util$age <- function(dob, age.day = today(), units = "years", floor = TRUE) {
         suppressMessages(library(lubridate))
         calc.age = interval(dob, age.day) / duration(num = 1, units = units)
@@ -185,7 +167,7 @@ util$age <- function(dob, age.day = today(), units = "years", floor = TRUE) {
 ##  Other data manipulation routines
 ########################################
 
-## Transform a list of vector of the same length to a data.frame.
+## Transform a list of numerical vectors of the same length to a data.frame.
 
 #from : https://github.com/bobthecat/codebox/blob/master/list2DF.r
 util$listOfVec2DF <- function(list){
@@ -199,7 +181,6 @@ util$listOfVec2DF <- function(list){
 util$merge.lists <- function(x,y,only.new.y=FALSE,append=FALSE,...) {
   # http://tolstoy.newcastle.edu.au/R/devel/04/11/1469.html
   out=x
-
   ystructure = names(c(y,recursive=TRUE))
   xstructure = names(c(x,recursive=TRUE))
   yunique = ystructure[! ystructure %in% xstructure]
@@ -220,6 +201,7 @@ util$merge.lists <- function(x,y,only.new.y=FALSE,append=FALSE,...) {
 }
 attr(util$merge.lists, "help") <- "several ways to 'merge' two different lists. Removes duplicates (append, only.new.y"
 
+
 util$tapply2 <- function(x, ...) {
   # like tapply but preserves factors
   if (is.factor(x)) {
@@ -231,6 +213,7 @@ util$tapply2 <- function(x, ...) {
 }
 attr(util$tapply2, "help") <- "like tapply(), but preserves factors."
 
+
 util$inject <- function(collection, start, fn) {
   # like lisp reduce.  (named after ruby)
   acc = start
@@ -238,6 +221,7 @@ util$inject <- function(collection, start, fn) {
     acc = fn(acc, x)
   acc
 }
+attr(util$inject, "help") <- "Iteratively apply a function on elements of a collection. like lisp reduce.  (named after ruby)"
 
 util$xprod <- function(xs,ys) {
   # Set cross-product
@@ -249,6 +233,7 @@ util$xprod <- function(xs,ys) {
   }
   ret
 }
+
 
 util$multi_xprod <- function(args) {
   # Set cross-product
@@ -273,25 +258,29 @@ util$multi_xprod <- function(args) {
 ## Printing, viewing
 ## see also:  str()
 
+
 util$printf <- function(...) cat(sprintf(...))
+
 
 util$listprint <- function(x) {
   s = paste(sapply(names(x), function(n)  sprintf("%s=%s", n,x[[n]])), collapse=' ')
   printf("%s\n", s)
 }
 
+
 util$msg <- function(...)  cat(..., "\n", file=stderr())
+
 
 util$h = utils::head
 
+
 util$ppy <- function(x, column.major=FALSE, ...) {
-  # pretty-print as yaml.  intended for rows with big textual cells.
-  # a la mysql's \G operator
   library(yaml)
   cat(as.yaml(x, column.major=column.major), ...)
   cat("\n", ...)
 }
-attr(util$ppy, "help") <- "pretty-print as YAML. Intended for rows with big textual cells."
+attr(util$ppy, "help") <- "pretty-print as YAML. Intended for rows with big textual cells. similar to mysql's '\\G' operator"
+
 
 util$table_html = function(...) {
   # Intended for inside dosink()
@@ -315,6 +304,7 @@ util$table_html = function(...) {
 # improved list of objects
 # http://stackoverflow.com/questions/1358003/tricks-to-manage-the-available-memory-in-an-r-session
 util$list_objects = function (pos = 1, pattern) {
+        library(stringr)
     napply = function(names, fn) sapply(names, function(x)
                                          fn(get(x, pos = pos)))
     names = ls(pos = pos, pattern = pattern)
@@ -333,7 +323,6 @@ util$list_objects = function (pos = 1, pattern) {
 
     is_flat = is.na(obj_dim)[, 1]
     is_vector = napply(names, function(x) is.vector(x) & class(x) != 'list')
-
 
     info_width = max(20, options('width')$width - 60)
 
@@ -376,16 +365,19 @@ util$list_objects = function (pos = 1, pattern) {
     out = rbind(subset(out, Type!='function'), subset(out, Type=='function'))
     out
 }
+attr(util$list_objects, "help") <- "like ls(), but improved listing of objects as a dataframe."
 
-util$lsos = function() {
-  d = list_objects() # util$list_objects()
+# shorthand
+util$lsos = function(n=10) {
+  d = list_objects() 
+  #..., order.by="Size", decreasing=TRUE, head=TRUE, n=n) # util$list_objects()
   d$name = row.names(d)
   d = subset(d, name != 'util')
   row.names(d)=d$name
   d$name=NULL
   d
 }
-
+attr(util$lsos, "help") <- "like ls(), but improved listing of objects as a dataframe."
 
 ########################################
 ## For performance optimization and long-running jobs
@@ -451,11 +443,11 @@ util$chrome <- function(...) {
 
 util$newwin <- function(x) {
   # Takes object printout into new file... dosink(OPEN=T) kinda subsumes this
-  f = paste("/tmp/tmp.", round(runif(1)*100),".txt",  sep='')
+  f = paste("/tmp/R_tmp.", round(runif(1)*100),".txt",  sep='')
   capture.output(print(x),file=f)
   # system("FILE_TO_VIEW=/tmp/tmp.txt /Applications/Utilities/Terminal.app/Contents/MacOS/Terminal /users/brendano/sw/bin/lame_viewer.sh")
   # system("DISPLAY=:0 /usr/X11R6/bin/xterm -geometry 80x60 -e less /tmp/tmp.txt &")
-  system(paste("mate ",f," &", sep=''))
+  system(paste("subl ",f," &", sep=''))
 }
 
 
@@ -487,7 +479,7 @@ util$dosink <- function(filename,cmd, open=NULL) {
   sink(filename)
   eval(cmd)
   sink(NULL)
-  if (?prio_check(open, exists('OPEN') && OPEN))
+  if (?coalesce(open, exists('OPEN') && OPEN))
     system(sprintf("open %s", filename))
 }
 
@@ -502,7 +494,7 @@ util$dosvg <- function(filename, ..., cmd, open=NULL) {
 
 
 ########################################
-## Plotting routines
+## Base R Plotting routines
 
 util$linelight <- function(x,y, lty='dashed', col='lightgray', ...) {
   # highlight a point with lines running to the axes.
@@ -552,7 +544,7 @@ util$hintonplot <- function(mat, max_value=max(abs(mat)), mid_value=0, ...) {
   axis(2, 1:nrow(mat), labels=row.names(mat))
   title(xlab=names(dimnames(mat))[2], ylab=names(dimnames(mat))[1], ...)
 }
-attr(util$hintonplot, "help") <- " Plots a matrix/dataframe/table as colored, size-varying boxes"
+attr(util$hintonplot, "help") <- " Plots a matrix/dataframe/table as colored, size-varying boxes (simpler than a heatmap)"
 
 util$binary_eval <- function(pred,labels, cutoff='naive', repar=TRUE, ...) {
   # Various binary classification evaluation plots and metrics
@@ -652,6 +644,8 @@ util$binary_eval <- function(pred,labels, cutoff='naive', repar=TRUE, ...) {
 
   invisible(rocr_pred)
 }
+######################################### 
+# functions below added by knb 2011-2017+
 
 util$save.xlsx <- function (file, ...)
   {
@@ -670,12 +664,12 @@ util$save.xlsx <- function (file, ...)
 }
 
 
-util$ggtheme <- function (){
-        theme(panel.background =        element_rect(fill=        "#FFFFFF"),
-              panel.grid.major.x = element_blank(),
-              panel.grid.major.y = element_line(colour= "grey",size=0.1),
-              panel.grid.minor   = element_line(colour="grey",size=0.1))
-}
+# util$ggtheme <- function (){
+#         theme(panel.background =        element_rect(fill=        "#FFFFFF"),
+#               panel.grid.major.x = element_blank(),
+#               panel.grid.major.y = element_line(colour= "grey",size=0.1),
+#               panel.grid.minor   = element_line(colour="grey",size=0.1))
+# }
 
 util$sysenv_search <- function(pat="."){
         grep(pat, names(Sys.getenv()),perl=TRUE, value=TRUE)
@@ -780,6 +774,26 @@ util$skipn <- function(fn, marker="*/"){
         skipn <- match(marker, lines) #gets the row index of the close comment
         skipn
 }
+
+#util$h", utils::head, env=.startup)
+#util$n", base::names, env=.startup)
+# same as my bash function i()
+util$ht <- function(d) rbind(head(d,6),tail(d,6))
+util$s <-function()  base::summary
+util$pwd <-function() base::getwd
+#util$cd <-function() base::setwd
+#util$last <- function(x) { rbind(tail(x, n = 1)) }, env=.startup)
+util$pkgs <- function(){as.data.frame(installed.packages()[,c(1,3)],row.names=F)}
+util$ucfirst <- function (str) {  minlen = 3; paste(sapply(strsplit(as.character(str), '\\s', NULL), FUN=function(str){ifelse(nchar(str) > (minlen-1), paste(toupper(substring(str, 1, 1)), tolower(substring(str, 2)), sep = ""), str)}), collapse = " ")}
+#util$describe <- function(obj) {attr(obj, "help")}, env=.startup)
+
+# alias to clear console. see  http://stackoverflow.com/questions/14260340/function-to-clear-the-console-in-r. CTRL-L also works.
+util$cls <- function(){cat("\014")}
+# Override q() to not save by default.
+# Same as saying q("no")
+#util$q <- function (save="no", ...) { quit(save=save, ...) }, env=.startup)
+
+util$datasets <- function(){ data(package = .packages(all.available = TRUE))}
 ########################################
 
 
