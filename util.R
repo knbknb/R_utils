@@ -780,6 +780,17 @@ util$skipn <- function(fn, marker="*/"){
         skipn <- match(marker, lines) #gets the row index of the close comment
         skipn
 }
+
+
+util$only_if <- function(condition){
+        function(func){
+                if (condition){
+                        func
+                } else {
+                        function(., ...) .
+                }
+        }
+}
 ########################################
 
 
