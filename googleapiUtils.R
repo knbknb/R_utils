@@ -61,6 +61,9 @@ googleapi$kgapi_lookup <- function(lookup_str, apikey=Sys.getenv("GOO_KGR_KEY"))
 attr(googleapi$kgapi_lookup, "help") <- "Perform a query on the Google Knowledge Graph API"
 
 
+googleapi$kgapi_lookup_kv <- function(term, apikey=Sys.getenv("GOO_KGR_KEY")) {
+        tidyr::gather(googleapi$kgapi_lookup(term, apikey))
+}
 
 ########################################
 ## Has to be last in file
