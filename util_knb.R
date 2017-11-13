@@ -1,7 +1,7 @@
 
 util_knb <- new.env()
 
-######################################### 
+#########################################
 # functions below added by knb 2011-2017+
 
 
@@ -24,6 +24,8 @@ util_knb$save.xlsx <- function (file, ...)
 }
 attr(util_knb$save.xlsx, "help") <- "(filename) -> void // Save objects to several worksheets in an xlsx file."
 
+util_knb$alldata <- function () data(package = .packages(all.available = TRUE))
+attr(util_knb$alldata, "help") <- "Find data sets available in your R installation"
 
 # util_knb$ggtheme <- function (){
 #         theme(panel.background =        element_rect(fill=        "#FFFFFF"),
@@ -151,7 +153,7 @@ util_knb$ucfirst <- function (str) {  minlen = 3; paste(sapply(strsplit(as.chara
 util_knb$cls <- function(){cat("\014")}
 
 util_knb$datasets <- function(){ data(package = .packages(all.available = TRUE))}
-util_knb$download <- function(){ 
+util_knb$download <- function(){
   download.file(url,destfile=filename,method="curl", extra="-L")
 }
 attr(util_knb$download, "help") <- "download a file via https, follow redirects"
@@ -297,7 +299,7 @@ util_knb$ggplotFile <- function(data, fn="") {
   require(reshape2, quietly = TRUE)
   require(scales, quietly = TRUE) # pretty_breaks
   require(gridExtra, quietly = TRUE) # several plots on one page
-  
+
   # errmsg <- sprintf("Cannot plot data file '%s'.", fn)
   data2 <- melt(data, id.vars = names(data)[1], variable.names = names(data)[-1])
   p <- list()
@@ -380,7 +382,7 @@ util_knb$download_13fs <-  function(cik = "0001079114"){
   all_13FS_overview_urls <- paste0("https://www.sec.gov", all_13FS_overview_urls)
   all_13FS_overview_urls_html <- map(all_13FS_overview_urls, read_html)
   all_13FS_overview_urls_html
-  
+
 }
 
 util_knb$filingdates_of_13fs <- function(cik = "0001079114"){
@@ -391,17 +393,17 @@ util_knb$filingdates_of_13fs <- function(cik = "0001079114"){
   all_13FS_overview_years[,1] <- gsub("-", "", stri_extract_last_regex(str = all_13FS_overview_years[,1],
                                                                        pattern="\\d+-\\d+-\\d+"))
   all_13FS_overview_years
-  
+
 }
 
 util_knb$persistent_obj <- function(outdir = ".", outfile = ""){
   outfile <- paste0(outdir, outfile)
   dir.create(outdir, showWarnings = FALSE)
-  
+
   all_13FS_overview_urls_html <- download_13fs(outfile)
   all_13FS_overview_urls_html_chr <- map(all_13FS_overview_urls_html,
                                          as, "character")
-  
+
   saveRDS(object = all_13FS_overview_urls_html_chr, file=outfile)
   outfile
 }
