@@ -13,9 +13,19 @@ options(repos = c(CRAN = "https://cloud.r-project.org"))
 options("pdfviewer" = "evince")
 options(prompt = paste0("R> "), digits = 4, show.signif.stars = TRUE)
 options(width = 120)
+
+# (needs processx package)
+# whenever you edit and save a source file,
+# Hugo will automatically navigate to the page
+# corresponding to this file,
+# no matter which page you are currently on.
+# Note: if you see a 404 error in RStudio Viewer,
+# just refresh the viewer.
 options(servr.daemon = TRUE,
-        blogdown.author = "Knut Behrends")
-options(blogdown.generator.server = TRUE) #needs processx package
+        blogdown.author = "Knut Behrends",
+        blogdown.generator.server = TRUE,
+        blogdown.hugo.server = c('-D', '-F', '--navigateToChanged'),
+        blogdown.title_case = TRUE)
 # options(tibble.width = Inf)
 # options(tibble.print_max = Inf)
 # options("max.print" = 600) # does this work?
