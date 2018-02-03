@@ -13,7 +13,9 @@ options(repos = c(CRAN = "https://cloud.r-project.org"))
 options("pdfviewer" = "evince")
 options(prompt = paste0("R> "), digits = 4, show.signif.stars = TRUE)
 options(width = 120)
-
+options(servr.daemon = TRUE,
+        blogdown.author = "Knut Behrends")
+options(blogdown.generator.server = TRUE) #needs processx package
 # options(tibble.width = Inf)
 # options(tibble.print_max = Inf)
 # options("max.print" = 600) # does this work?
@@ -37,7 +39,7 @@ tryCatch({
                   quit(save = save, ...)
                 }
                 #attr(knbknb$q, "help") <- "Override q() to not save by default. Same as saying q('no')"
-                
+
         }
         #options(rstudio.markdownToHTML =
         #  function(inputFile, outputFile) {
@@ -81,6 +83,7 @@ Sys.setenv(R_HISTFILE = file.path("/home/knb/.Rhistory"))
       source(fn)
     }
   }
+        # remove from global environment
   rm(fn)
   rm(sourcefiles)
 }
