@@ -7,7 +7,7 @@ googleapi <- new.env()
 googleapi$kgapi_call_str <- function(query,
                                      apikey=Sys.getenv("GOO_KGR_KEY"),
                            templatestr="https://kgsearch.googleapis.com/v1/entities:search?key=%s&limit=1&indent=True&query=%s"){
-        knowledgeapi <- sprintf(fmt = templatestr, apikey, xml2::url_escape(query))
+        knowledgeapi <- sprintf(fmt = templatestr, Sys.getenv("GOO_KGR_KEY"), xml2::url_escape(query))
         knowledgeapi
 }
 
@@ -33,17 +33,18 @@ googleapi$kgapi_call_data <- function(api_call_str, extracolumn=NA){
                 return(json)
         }
         # Query unsuccessful, try shortened company-name,
-        if (stri_length(extracolumn_shortened) > 0){
+        if (nchar(extracolumn_shortened) > 0){
                 message(sprintf("cannot resolve -> 2nd try:\n%s\n%s\n\n", extracolumn, extracolumn_shortened))
                 api_call_str <- kgapi_call_str(query=extracolumn_shortened, apikey=apikey)
                 json <- kg_api_call(api_call_str, extracolumn)
 
                 if(!is.null(json)){
+                        message(sprintf("2nd try: Success for %s", extracolumn))
                         return(json)
                 }
         }
 
-        if(is.null(json) & stri_length(extracolumn_shortened.2) > 0) {
+        if(is.null(json) & nchar(extracolumn_shortened.2) > 0) {
                 message(sprintf("cannot resolve -> 3rd try:\n%s\n%s\n\n", extracolumn, extracolumn_shortened.2))
                 api_call_str <- kgapi_call_str(query=extracolumn_shortened.2, apikey=apikey)
                 json <- kg_api_call(api_call_str, extracolumn)
@@ -54,15 +55,17 @@ googleapi$kgapi_call_data <- function(api_call_str, extracolumn=NA){
 
 }
 
-googleapi$kgapi_lookup <- function(lookup_str, apikey=Sys.getenv("GOO_KGR_KEY")) {
-        dat <- kgapi_call_data(api_call_str=kgapi_call_str(query=lookup_str, apikey=apikey), extracolumn = lookup_str)
+googleapi$kgapi_lookup <- function(lookup_str, apikey = Sys.getenv("GOO_KGR_KEY")) {
+        callstr <- kgapi_call_str(query=lookup_str, apikey=apikey)
+        dat <- kgapi_call_data(api_call_str = callstr, extracolumn = lookup_str)
         dat
 }
 attr(googleapi$kgapi_lookup, "help") <- "Perform a query on the Google Knowledge Graph API"
 
 
-googleapi$kgapi_lookup_kv <- function(term, apikey=Sys.getenv("GOO_KGR_KEY")) {
-        tidyr::gather(googleapi$kgapi_lookup(term, apikey))
+googleapi$kgapi_lookup_kv <- function(term, apikey = Sys.getenv("GOO_KGR_KEY")) {
+        dfr <- googleapi$kgapi_lookup(term, apikey)
+        tidyr::gather(dfr)
 }
 
 ########################################
