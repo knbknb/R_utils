@@ -40,6 +40,7 @@ options(servr.daemon = TRUE,
 tryCatch({
         if (interactive()) {
                 #library(lookup)
+                #library(processx)
                 library(colorout) # Colorize R output in terminal
                 #library(tibble) # for rstudio clipboard
                 #library(clipr) # for rstudio clipboard
@@ -61,9 +62,9 @@ tryCatch({
         # library(rj) #  RJava, for Eclipse
         # http://stackoverflow.com/questions/19024873/why-does-r-hang-when-using-ngramtokenizer?rq=1
         # library(rJava)
-        # .jinit(parameters="-Xmx4g")
+        .jinit(parameters="-Xmx8g")
         # Sets the default number of threads to use
-        # options(mc.cores=1)
+        options(mc.cores=4)
 
 }) #end try
 
