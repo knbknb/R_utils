@@ -390,8 +390,8 @@ util_knb$filingdates_of_13fs <- function(cik = "0001079114"){
   all_13FS_overview <- sprintf('https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=%s&type=13F-HR&dateb=&owner=include&count=400', cik)
   all_13FS_overview_html <- read_html(all_13FS_overview)
   all_13FS_overview_years <- html_table(all_13FS_overview_html)[[3]][, c(3,4)]
-  all_13FS_overview_years[,1] <- gsub("-", "", stri_extract_last_regex(str = all_13FS_overview_years[,1],
-                                                                       pattern="\\d+-\\d+-\\d+"))
+  all_13FS_overview_years[,1] <- gsub("-", "", str_extract(string = all_13FS_overview_years[,1],
+                                                                       pattern=regex("\\d+-\\d+-\\d+")))
   all_13FS_overview_years
 
 }
