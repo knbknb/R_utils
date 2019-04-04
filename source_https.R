@@ -16,8 +16,8 @@ source_https <- function(url, ...) {
   # load package
   require(RCurl)
   # using the raw option
-  if(length(grep('https://github.com', url))==1) stop("github RAW source required")
-  # parse and evaluate each .R script
+  if (length(grep("https://github.com", url)) == 1) stop("github RAW source required")
+  # parse and evaluate each .R script ... good luck
   sapply(c(url, ...), function(u) {
     eval(parse(text = getURL(u, followlocation = TRUE, cainfo = system.file("CurlSSL", "cacert.pem", package = "RCurl"))), envir = .GlobalEnv)
   })
