@@ -1,11 +1,18 @@
 R_utils
 =======
 
-See also my "snippets" repository.
+#### Some utility functions that are useful for learning purposes
+
+No longer *that* useful, because now I'd use `tidyverse` functions for most tasks.
+
+#### Deprecated
+
 
 Forked from Brendan O'Connor's github repo [dlanalysis][2], Feb 2013.
 
-**util.R contains utilities for R that might be useful.**
+##### util.R contains utilities for R that might be useful.
+
+##### Organized in the following way:
 
 From Question [How to organize large R programs?][1] on Stackoverflow.com:
 
@@ -13,7 +20,7 @@ From Question [How to organize large R programs?][1] on Stackoverflow.com:
 >
 >R's package system is rather hard to use.
 >
->A lightweight alternative: to place a file's functions inside an environment (what every other language calls a "namespace") and attach it. For example, I made a 'util' group of functions like so:
+>A lightweight alternative: to place a file's functions inside an environment (what every other language calls a "namespace") and attach it. For example, I made an `'util'` group of functions like so:
 
        util = new.env()
      
@@ -27,7 +34,7 @@ From Question [How to organize large R programs?][1] on Stackoverflow.com:
        
        attach(util)
   
->This is all in a file util.R. When you source() it, you get the environment 'util' so you can call util$bgrep() and such; but furthermore, the attach() call makes it so just bgrep() and such work directly. If you didn't put all those functions in their own environment, they'd pollute the interpreter's top-level namespace (the one that ls() shows).
+>This is all in a file `util.R`. When you `source()` it, you get the environment '`util`' so you can call `util$bgrep()` and such; but furthermore, the `attach()` call makes it so just `bgrep()` and such work directly. If you didn't put all those functions in their own environment, they'd pollute the interpreter's top-level namespace (the one that ls() shows).
 >
 >Trying to simulate Python's system, where every file is a module. That would be better to have, but this seems OK.
 
