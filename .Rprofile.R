@@ -1,6 +1,5 @@
 # ## Knut Behrends .Rprofile
 
-# aliases
 ## If you ever delete all objects in your global environment,
 ## then the aliases above will also be deleted.
 ## You can prevent that by hiding these in an environment
@@ -37,7 +36,8 @@ options(servr.daemon = TRUE,
 # will turn on completion in library and require calls
 # so that when I type library(su and hit tab, it becomes library(survival.
 #utils::rc.settings(ipck=TRUE)
-#.libPaths(c(.libPaths(), "~/R/x86_64-pc-linux-gnu-library/3.5"))
+
+#.libPaths(c(.libPaths(), "some_path"))
 
 tryCatch({
         if (interactive()) {
@@ -64,9 +64,9 @@ setHook(
 Sys.setenv(R_HISTSIZE = "100000")
 # If no R_HISTFILE environment variable, set default
 #if (Sys.getenv("R_HISTFILE") == "") {
-Sys.setenv(R_HISTFILE = file.path("/home/knb/.Rhistory"))
-#}
+Sys.setenv(R_HISTFILE = file.path(Sys.getenv("HOME"), ".Rhistory"))
 
+# aliases and a few utility functions
 {
   sourcefiles <- c(
     "/home/knb/code/git/_my/R_utils/util.R",
@@ -84,6 +84,3 @@ Sys.setenv(R_HISTFILE = file.path("/home/knb/.Rhistory"))
  rm(sourcefiles)
 }
 
-# these messages can interfere with the package installation mechanism
-#.First <- function() cat(paste0("\n #  Useful aliases are in env '.startup', Functions in env 'util'.\n\n"))
-#.Last <- function() cat("\n   Goodbye!\n\n")
