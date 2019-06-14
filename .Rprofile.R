@@ -69,7 +69,7 @@ Sys.setenv(R_HISTFILE = file.path(Sys.getenv("HOME"), ".Rhistory"))
 # aliases and a few utility functions
 {
   sourcefiles <- c(
-    "/home/knb/code/git/_my/R_utils/util.R",
+   # "/home/knb/code/git/_my/R_utils/util.R",
     "/home/knb/code/git/_my/R_utils/util_knb.R",
     "/home/knb/code/git/_my/R_utils/googleapiUtils.R"
   )
