@@ -28,8 +28,8 @@ attr(googleapi$kg_api_call, "help") <- "kgapi_call(): Perform Knowledge Graph Qu
 
 
 googleapi$kgapi_call_data <- function(api_call_str, extracolumn = NA) {
-  extracolumn_shortened <- gsub("\s+\w+$", "", extracolumn, perl = TRUE)
-  extracolumn_shortened.2 <- gsub("\s+\w+$", "", extracolumn_shortened, perl = TRUE)
+  extracolumn_shortened <- gsub("\\s+\\w+$", "", extracolumn, perl = TRUE)
+  extracolumn_shortened.2 <- gsub("\\s+\\w+$", "", extracolumn_shortened, perl = TRUE)
   json <- kg_api_call(api_call_str, extracolumn)
   if (!is.null(json)) {
     return(json)
@@ -64,7 +64,7 @@ googleapi$kgapi_lookup <- function(lookup_str, apikey = Sys.getenv("GOO_KGR_KEY"
         dat <- kgapi_call_data(api_call_str = callstr, extracolumn = lookup_str)
         dat
 }
-attr(googleapi$kgapi_lookup, "help") <- "Perform a query on the Google Knowledge Graph API, return a JSON string."
+attr(googleapi$kgapi_lookup, "help") <- "Perform a query on the Google Knowledge Graph API, return a data frame."
 
 
 googleapi$kgapi_lookup_kv <- function(term, apikey = Sys.getenv("GOO_KGR_KEY")) {

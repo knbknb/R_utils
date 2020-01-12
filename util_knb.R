@@ -7,6 +7,8 @@ util_knb$describe <- function(obj) attr(obj, "help")
 #
 # call pseudo-docstrings like this (example)
 # describe(all_datasets)
+
+
 util_knb$all_datasets <- function() data(package = .packages(all.available = TRUE))
 attr(util_knb$all_datasets, "help") <- "all_datasets(): Find data sets available in your R installation"
 

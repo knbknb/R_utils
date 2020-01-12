@@ -8,14 +8,26 @@ attach(.startup)
 
 options(papersize = "a4")
 # options(showWarnCalls=TRUE, showErrorCalls=TRUE)
-options(repos = c(CRAN = "https://cloud.r-project.org"))
-options("pdfviewer" = "evince")
-options(prompt = paste0("R> "), digits = 4, show.signif.stars = TRUE)
-options(width = 120)
-options(jags.moddir = "/usr/lib/x86_64-linux-gnu/JAGS/modules-4/")
+options(repos = c(CRAN = "https://cloud.r-project.org"),#
+        "pdfviewer" = "evince",
+        prompt = paste0("R> "),
+        digits = 6L,
+        digits.secs = 6L,
+        show.signif.stars = TRUE,
+        mc.cores = 4L ,
+        NCpus = 4,
+        useFancyQuotes = FALSE,
+        width = 200, # terminal width
+        jags.moddir = "/usr/lib/x86_64-linux-gnu/JAGS/modules-4/",
+        shiny.reactlog = TRUE) # graphical representation. in the app, press CTRL-F3
 
-# graphical representation. in the app, press CTRL-F3
-options(shiny.reactlog = TRUE)
+Sys.setenv(TZ="Europe/Berlin")
+Sys.setenv(R_HISTSIZE = "100000")
+# If no R_HISTFILE environment variable, set default
+#if (Sys.getenv("R_HISTFILE") == "") {
+Sys.setenv(R_HISTFILE = file.path(Sys.getenv("HOME"), ".Rhistory"))
+
+#Sys.setenv(RETICULATE_PYTHON = "/usr/bin/python3")
 
 # (needs processx package)
 # whenever you edit and save a source file,
@@ -38,14 +50,45 @@ options(servr.daemon = TRUE,
 #utils::rc.settings(ipck=TRUE)
 
 #.libPaths(c(.libPaths(), "some_path"))
+if (requireNamespace("magrittr", quietly = TRUE)) {
+  `%>%` <- magrittr::`%>%`
+}
 
 tryCatch({
         if (interactive()) {
-                library(colorout) # Colorize R output in terminal
-                options(colorout.anyterm = TRUE)
-                q <- function(save="no", ...) {
-                  quit(save = save, ...)
-                }
+
+          options(menu.graphics = FALSE)
+
+          if (is.na(Sys.getenv("RSTUDIO", NA)))
+            options(
+              setWidthOnResize = TRUE
+          )
+
+          if( requireNamespace("colorout", quietly = TRUE) ){
+            options(colorout.anyterm = TRUE)  # Colorize R output in terminal
+          }
+
+          if( requireNamespace("dang", quietly = TRUE) ){
+            message(unlist(ifelse(stats::runif(1) > 0.5, dang::demotivate(), dang::motivate())))
+          }
+          if( requireNamespace("prompt", quietly = TRUE) ){
+            prompt::set_prompt(prompt::prompt_git)
+
+            if(dang::getGitRoot() == ""){
+              options(prompt = "R> ")
+            }
+          }
+          q <- function(save="no", ...) {
+            quit(save = save, ...)
+          }
+        } else { # not interactive
+          # warn on partial matches
+          options(
+            warnPartialMatchArgs = TRUE,
+            warnPartialMatchAttr = TRUE,
+            warnPartialMatchDollar = TRUE
+          )
+
         }
         #library(rJava)
         #.jinit(parameters="-Xmx8g")
@@ -61,26 +104,25 @@ setHook(
   packageEvent("grDevices", "onLoad"),
   function(...) grDevices::ps.options(horizontal = FALSE)
 )
-Sys.setenv(R_HISTSIZE = "100000")
-# If no R_HISTFILE environment variable, set default
-#if (Sys.getenv("R_HISTFILE") == "") {
-Sys.setenv(R_HISTFILE = file.path(Sys.getenv("HOME"), ".Rhistory"))
 
 # aliases and a few utility functions
 {
-  sourcefiles <- c(
-   # "/home/knb/code/git/_my/R_utils/util.R",
-    "/home/knb/code/git/_my/R_utils/util_knb.R",
-    "/home/knb/code/git/_my/R_utils/googleapiUtils.R"
-  )
- for (fn in sourcefiles) {
-  tryCatch(source(fn),
-    error = function(e) {
-      message(sprintf("Startup: Cannot source '%s':\n%s", fn, conditionMessage(e)))
-      #rm(fn)
+  if(dir.exists("/home/knb/code/git/_my/R_utils/")){
+    sourcefiles <- c(
+      # "/home/knb/code/git/_my/R_utils/util.R",
+      "/home/knb/code/git/_my/R_utils/util_knb.R",
+      "/home/knb/code/git/_my/R_utils/googleapiUtils.R"
+    )
+    for (fn in sourcefiles) {
+      tryCatch(source(fn),
+               error = function(e) {
+                 message(sprintf("Startup: Cannot source '%s':\n%s", fn, conditionMessage(e)))
+                 #rm(fn)
+               }
+      )
     }
-  )
- }
- rm(sourcefiles)
+    rm(sourcefiles)
+  }
+
 }
 
