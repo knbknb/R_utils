@@ -14,14 +14,23 @@ options(repos = c(CRAN = "https://cloud.r-project.org"),#
         digits = 6L,
         digits.secs = 6L,
         show.signif.stars = TRUE,
-        mc.cores = 4L ,
+        mc.cores = 4L,
         NCpus = 4,
         useFancyQuotes = FALSE,
         width = 200, # terminal width
         jags.moddir = "/usr/lib/x86_64-linux-gnu/JAGS/modules-4/",
         shiny.reactlog = TRUE) # graphical representation. in the app, press CTRL-F3
-
-Sys.setenv(TZ="Europe/Berlin")
+#
+# https://rud.is/b/2020/01/03/writing-frictionless-r-package-wrappers-building-a-basic-r-package/
+options(
+  usethis.description = list(
+     `Authors@R` = 'person("Knut", "Behrends", email = "knb@tnp-online.de", role = c("aut", "cre"),
+    comment = c(ORCID = "https://orcid.org/0000-0003-0594-2892"))',
+    License = "MIT + file LICENSE"
+   )
+  )
+#
+#Sys.setenv(TZ="Europe/Berlin")
 Sys.setenv(R_HISTSIZE = "100000")
 # If no R_HISTFILE environment variable, set default
 #if (Sys.getenv("R_HISTFILE") == "") {
