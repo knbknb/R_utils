@@ -115,12 +115,14 @@ setHook(
 )
 
 # aliases and a few utility functions
-{
-  if(dir.exists("/home/knb/code/git/_my/R_utils/")){
+{ 
+  HOME <- Sys.getenv("HOME")
+  workdir <- paste0(HOME, "/code/git/_my/R_utils/")
+  if(dir.exists(workdir)){
     sourcefiles <- c(
       # "/home/knb/code/git/_my/R_utils/util.R",
-      "/home/knb/code/git/_my/R_utils/util_knb.R",
-      "/home/knb/code/git/_my/R_utils/googleapiUtils.R"
+      paste0(workdir, "util_knb.R"),
+      paste0(workdir, "googleapiUtils.R")
     )
     for (fn in sourcefiles) {
       tryCatch(source(fn),
